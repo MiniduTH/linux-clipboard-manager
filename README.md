@@ -1,137 +1,218 @@
 # Clipboard Manager for Linux
 
-A clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) that tracks your clipboard history and allows you to restore previous clipboard entries.
+A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) that tracks your clipboard history and allows you to restore previous clipboard entries with a global hotkey.
 
-## Features
+## ✨ Features
 
-- 📋 Automatic clipboard monitoring
-- 🖥️ GUI interface using Fyne
-- 💻 Terminal fallback interface
-- 💾 Persistent history storage
-- 🔄 Duplicate detection and removal
-- 🧹 History management (clear, limit)
-- 🐧 Full Linux support (X11 and Wayland)
+- 📋 **Smart clipboard monitoring** with automatic filtering
+- ⌨️ **Global hotkey support (Super+Z)** for instant access from anywhere
+- 🖥️ **GUI interface** using Fyne with automatic terminal fallback
+- 🔧 **System tray integration** with right-click menu
+- 💾 **Persistent history storage** (up to 50 items)
+- 🔄 **Intelligent duplicate detection** and removal
+- 🧹 **Advanced history management** (clear, limit, validation)
+- 🐧 **Full Linux support** (X11 and Wayland)
+- 🚀 **Multiple run modes** (daemon, tray, GUI, terminal)
+- ⚡ **Automatic desktop environment detection** (GNOME, KDE)
+- 🔗 **Desktop integration** with .desktop files and autostart
 
-## Requirements
+## 🚀 Quick Start
 
-- Go 1.21 or later
-- Linux with X11 or Wayland
-- Clipboard utility: `xclip`, `xsel`, or `wl-clipboard`
-- For GUI: GTK development libraries
+### 1. Install Dependencies
 
-## Installation
-
-### Quick Install
-
+**Ubuntu/Debian:**
 ```bash
-chmod +x install.sh
-./install.sh
+sudo apt update
+sudo apt install -y xclip libgtk-3-dev libayatana-appindicator3-dev
 ```
 
-### Manual Installation
+**Fedora:**
+```bash
+sudo dnf install -y xclip gtk3-devel libayatana-appindicator-gtk3-devel
+```
 
-1. **Install dependencies:**
+### 2. Build and Setup
 
-   **Ubuntu/Debian:**
-   ```bash
-   sudo apt update
-   sudo apt install -y xclip libgtk-3-dev libayatana-appindicator3-dev
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/MiniduTH/linux-clipboard-manager.git
+cd linux-clipboard-manager
 
-   **Fedora:**
-   ```bash
-   sudo dnf install -y xclip gtk3-devel libayatana-appindicator-gtk3-devel
-   ```
+# Build the application
+go build -o clipboard-manager
 
-2. **Build the application:**
-   ```bash
-   go mod tidy
-   go build -o clipboard-manager
-   ```
+# Quick setup with hotkeys (recommended)
+./setup-hotkey.sh
+```
 
-## Usage
+That's it! Press **Super+Z** (Windows key + Z) from anywhere to access your clipboard history.
 
-### Start Clipboard Watcher
+## 📖 Usage
+
+### Global Hotkey (Recommended)
+After running `./setup-hotkey.sh`, press **Super+Z** from anywhere to open clipboard history.
+
+### Manual Commands
+
+#### System Integration Mode
 ```bash
 ./clipboard-manager
 ```
-This starts the background clipboard monitoring service.
+Starts clipboard monitoring and attempts to set up system hotkeys automatically.
 
-### Show GUI History
+#### Show GUI History
 ```bash
 ./clipboard-manager show
 ```
 Opens a graphical window showing clipboard history. Click any item to restore it to clipboard.
 
-### Show Terminal History
+#### Show Terminal History
 ```bash
 ./clipboard-manager list
 ```
-Displays clipboard history in the terminal.
+Displays clipboard history in the terminal - perfect for SSH sessions or minimal setups.
 
-### Run in Background
+#### System Tray Mode
 ```bash
-nohup ./clipboard-manager > /dev/null 2>&1 &
+./clipboard-manager tray
+```
+Runs with a system tray icon. Right-click the tray icon for menu options.
+
+#### Background Daemon Mode
+```bash
+./clipboard-manager daemon
+```
+Runs in background without GUI or hotkeys - ideal for servers or minimal setups.
+
+#### Help
+```bash
+./clipboard-manager help
+```
+Shows all available commands and options.
+
+## ⚙️ Configuration
+
+- **History location**: `~/.local/share/clipboard-manager/history.json`
+- **Maximum history items**: 50 (configurable in code)
+- **Auto-save interval**: 10 seconds
+- **Desktop entries**: `~/.local/share/applications/`
+- **Autostart**: `~/.config/autostart/` (optional)
+
+## 🔧 Advanced Setup
+
+### Manual Hotkey Setup
+If automatic setup doesn't work:
+
+1. Open your system settings
+2. Go to Keyboard Shortcuts
+3. Add a custom shortcut:
+   - **Name**: Clipboard Manager
+   - **Command**: `/path/to/clipboard-manager show`
+   - **Shortcut**: Super+Z
+
+### Autostart Setup
+To start automatically on login:
+```bash
+# The setup script can do this automatically, or manually:
+cp clipboard-manager.desktop ~/.config/autostart/
 ```
 
-## Configuration
+### System Service (Advanced)
+For system-wide installation:
+```bash
+sudo cp clipboard-manager /usr/local/bin/
+sudo systemctl --user enable clipboard-manager.service
+```
 
-- History is stored in `~/.local/share/clipboard-manager/history.json`
-- Maximum history items: 50 (configurable in code)
-- Auto-save interval: 10 seconds
-
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### GUI Not Working
-If the GUI doesn't work, the application will automatically fall back to terminal mode.
-
-**Common issues:**
-- No display server: Ensure you're running in X11 or Wayland session
-- Missing GTK libraries: Install development packages for your distribution
-- Permission issues: Ensure proper access to clipboard
+- **Issue**: GUI doesn't open
+- **Solution**: The app automatically falls back to terminal mode. Install GTK development libraries:
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install libgtk-3-dev libayatana-appindicator3-dev
+  
+  # Fedora
+  sudo dnf install gtk3-devel libayatana-appindicator-gtk3-devel
+  ```
 
 ### Clipboard Not Working
-- Install clipboard utilities: `sudo apt install xclip` (Ubuntu) or `sudo dnf install xclip` (Fedora)
-- Check if running in proper graphical session
-- Verify `$DISPLAY` or `$WAYLAND_DISPLAY` environment variables are set
+- **Issue**: Clipboard monitoring fails
+- **Solution**: Install clipboard utilities:
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install xclip
+  
+  # Fedora
+  sudo dnf install xclip
+  ```
+
+### Hotkey Not Working
+- **Issue**: Super+Z doesn't work
+- **Solutions**:
+  1. Run `./setup-hotkey.sh` again
+  2. Check if running in proper graphical session
+  3. Verify `$DISPLAY` or `$WAYLAND_DISPLAY` environment variables
+  4. Set up manually in system settings
 
 ### Build Issues
-- Ensure Go 1.21+ is installed
-- Run `go mod tidy` to resolve dependencies
-- Install CGO dependencies for Fyne GUI
+- **Issue**: Compilation fails
+- **Solution**: 
+  1. Ensure Go 1.21+ is installed
+  2. Run `go mod tidy`
+  3. Install CGO dependencies for Fyne GUI
 
-## Development
+## 🤝 Contributing
 
-The application consists of three main components:
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-- `main.go` - Main application logic and clipboard monitoring
-- `ui.go` - GUI interface using Fyne
-- `history.go` - History management and persistence
-
-## License
-
-MIT License - feel free to modify and distribute.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test on both Ubuntu and Fedora
-5. Submit a pull request
-
-## System Integration
-
-To start automatically with your desktop session, create a desktop entry:
-
+### Development Setup
 ```bash
-cat > ~/.config/autostart/clipboard-manager.desktop << EOF
-[Desktop Entry]
-Type=Application
-Name=Clipboard Manager
-Exec=/path/to/clipboard-manager
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-EOF
+git clone https://github.com/MiniduTH/linux-clipboard-manager.git
+cd linux-clipboard-manager
+go mod tidy
+go build -o clipboard-manager
 ```
+
+### Testing
+```bash
+# Run the test script
+./test.sh
+
+# Test different modes
+./clipboard-manager daemon &
+./clipboard-manager list
+./clipboard-manager show
+```
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🌟 Features Comparison
+
+| Feature | This App | Other Tools |
+|---------|----------|-------------|
+| Global Hotkey | ✅ Super+Z | ❌ Usually not |
+| GUI + Terminal | ✅ Both | ❌ Usually one |
+| Smart Filtering | ✅ Yes | ❌ No |
+| System Tray | ✅ Yes | ❌ Rare |
+| Auto Setup | ✅ Yes | ❌ Manual |
+| Cross-DE Support | ✅ GNOME/KDE | ❌ Limited |
+
+## 🚀 Roadmap
+
+- [ ] Wayland-native clipboard support
+- [ ] Plugin system for custom filters
+- [ ] Cloud sync support
+- [ ] Encrypted history storage
+- [ ] Custom hotkey configuration
+- [ ] Clipboard search functionality
+- [ ] Image clipboard support
+
+---
+
+**Made with ❤️ for the Linux community**
+
+If you find this useful, please ⭐ star the repository!

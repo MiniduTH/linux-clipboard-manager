@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -22,6 +23,9 @@ func main() {
 	loadHistory() // load previous data
 
 	if len(os.Args) > 1 && os.Args[1] == "show" {
+		// Ensure daemon is running before showing GUI
+		ensureDaemonRunning()
+		
 		// popup mode
 		if err := showPopup(); err != nil {
 			fmt.Printf("Error showing popup: %v\n", err)
@@ -40,15 +44,28 @@ func main() {
 		fmt.Println("Clipboard Manager for Linux")
 		fmt.Println("Usage:")
 		fmt.Println("  ./clipboard-manager        - Start with system integration")
-		fmt.Println("  ./clipboard-manager show   - Show GUI history")
+		fmt.Println("  ./clipboard-manager show   - Show GUI history (auto-starts daemon)")
 		fmt.Println("  ./clipboard-manager list   - Show terminal history")
 		fmt.Println("  ./clipboard-manager tray   - Start with system tray")
 		fmt.Println("  ./clipboard-manager daemon - Start in background (no GUI)")
+		fmt.Println("  ./clipboard-manager status - Show daemon status")
+		fmt.Println("  ./clipboard-manager stop   - Stop daemon")
 		fmt.Println("  ./clipboard-manager help   - Show this help")
 		fmt.Println()
 		fmt.Println("System Integration:")
 		fmt.Println("  The app will try to set up Super+Z hotkey automatically")
 		fmt.Println("  Use 'tray' mode for system tray integration")
+		fmt.Println("  The daemon runs in background to monitor clipboard")
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "status" {
+		showDaemonStatus()
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "stop" {
+		stopDaemon()
 		return
 	}
 
@@ -117,7 +134,8 @@ func checkEnvironment() bool {
 
 // watches clipboard continuously
 func watchClipboard() {
-	last := ""
+	lastText := ""
+	var lastImageData []byte
 	saveTimer := time.NewTicker(10 * time.Second) // save every 10 seconds
 	defer saveTimer.Stop()
 	
@@ -131,60 +149,74 @@ func watchClipboard() {
 	maxErrors := 5
 	
 	for {
-		text, err := clipboard.ReadAll()
-		if err != nil {
+		// Check for text content first
+		text, textErr := clipboard.ReadAll()
+		
+		if textErr == nil {
+			// Reset error count on successful read
+			errorCount = 0
+			
+			// Clean up the text
+			text = strings.TrimSpace(text)
+			
+			// Check if we have new meaningful text content
+			if len(text) >= 2 && text != lastText && !isSystemNoise(text) {
+				addToHistory(text)
+				lastText = text
+				
+				// Show notification for meaningful content
+				if len(text) > 5 {
+					displayText := text
+					if len(displayText) > 60 {
+						displayText = displayText[:60] + "..."
+					}
+					// Replace newlines for cleaner output
+					displayText = strings.ReplaceAll(displayText, "\n", " ")
+					fmt.Printf("📋 Text copied: %s\n", displayText)
+				}
+			}
+		} else {
 			errorCount++
 			if errorCount <= maxErrors {
-				fmt.Printf("Clipboard read error (%d/%d): %v\n", errorCount, maxErrors, err)
+				fmt.Printf("Clipboard text read error (%d/%d): %v\n", errorCount, maxErrors, textErr)
 			}
-			if errorCount >= maxErrors {
-				fmt.Println("Too many clipboard errors, reducing check frequency...")
-				time.Sleep(5 * time.Second)
-			} else {
-				time.Sleep(2 * time.Second)
+		}
+		
+		// Check for image content
+		if imageData, format, imageErr := detectImageInClipboard(); imageErr == nil {
+			// Reset error count on successful image read
+			errorCount = 0
+			
+			// Check if we have new image content (compare first 1KB for efficiency)
+			compareSize := 1024
+			if len(imageData) < compareSize {
+				compareSize = len(imageData)
 			}
-			continue
-		}
-		
-		// Reset error count on successful read
-		errorCount = 0
-		
-		// Clean up the text
-		text = strings.TrimSpace(text)
-		
-		// Skip empty or very short text
-		if len(text) < 2 {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		
-		// Skip if same as last
-		if text == last {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		
-		// Skip if it looks like system clipboard noise
-		if isSystemNoise(text) {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		
-		addToHistory(text)
-		last = text
-		
-		// Only show notification for meaningful content
-		if len(text) > 5 {
-			displayText := text
-			if len(displayText) > 60 {
-				displayText = displayText[:60] + "..."
+			
+			isNewImage := len(lastImageData) == 0 || 
+				len(lastImageData) != len(imageData) ||
+				!bytes.Equal(imageData[:compareSize], lastImageData[:compareSize])
+			
+			if isNewImage {
+				addImageToHistory(imageData, format)
+				lastImageData = make([]byte, len(imageData))
+				copy(lastImageData, imageData)
+				
+				// Show notification for image
+				sizeKB := len(imageData) / 1024
+				fmt.Printf("📋 Image copied: %s (%d KB)\n", format, sizeKB)
 			}
-			// Replace newlines for cleaner output
-			displayText = strings.ReplaceAll(displayText, "\n", " ")
-			fmt.Printf("📋 Copied: %s\n", displayText)
 		}
 		
-		time.Sleep(500 * time.Millisecond)
+		// Handle errors and sleep timing
+		if textErr != nil && errorCount >= maxErrors {
+			fmt.Println("Too many clipboard errors, reducing check frequency...")
+			time.Sleep(5 * time.Second)
+		} else if textErr != nil {
+			time.Sleep(2 * time.Second)
+		} else {
+			time.Sleep(500 * time.Millisecond)
+		}
 	}
 }
 
@@ -229,12 +261,28 @@ func showTerminalHistory() {
 	
 	for i := len(history) - 1; i >= 0; i-- {
 		item := history[i]
-		if len(item) > 80 {
-			item = item[:80] + "..."
+		itemNum := len(history) - i
+		
+		if item.Type == ItemTypeText {
+			content := item.Content
+			if len(content) > 80 {
+				content = content[:80] + "..."
+			}
+			// Replace newlines with spaces for better terminal display
+			content = strings.ReplaceAll(content, "\n", " ")
+			fmt.Printf("%2d: [TEXT] %s\n", itemNum, content)
+		} else if item.Type == ItemTypeImage {
+			if item.ImageMeta != nil {
+				fmt.Printf("%2d: [IMAGE] %s %dx%d (%d KB)\n", 
+					itemNum, 
+					strings.ToUpper(item.ImageMeta.Format),
+					item.ImageMeta.Width, 
+					item.ImageMeta.Height,
+					item.ImageMeta.Size/1024)
+			} else {
+				fmt.Printf("%2d: [IMAGE] Unknown format\n", itemNum)
+			}
 		}
-		// Replace newlines with spaces for better terminal display
-		item = strings.ReplaceAll(item, "\n", " ")
-		fmt.Printf("%2d: %s\n", len(history)-i, item)
 	}
 	
 	fmt.Println(strings.Repeat("-", 50))
