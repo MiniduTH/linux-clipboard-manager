@@ -39,14 +39,47 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "help" {
 		fmt.Println("Clipboard Manager for Linux")
 		fmt.Println("Usage:")
-		fmt.Println("  ./clipboard-manager        - Start clipboard watcher")
+		fmt.Println("  ./clipboard-manager        - Start with system integration")
 		fmt.Println("  ./clipboard-manager show   - Show GUI history")
 		fmt.Println("  ./clipboard-manager list   - Show terminal history")
+		fmt.Println("  ./clipboard-manager tray   - Start with system tray")
+		fmt.Println("  ./clipboard-manager daemon - Start in background (no GUI)")
 		fmt.Println("  ./clipboard-manager help   - Show this help")
+		fmt.Println()
+		fmt.Println("System Integration:")
+		fmt.Println("  The app will try to set up Super+Z hotkey automatically")
+		fmt.Println("  Use 'tray' mode for system tray integration")
 		return
 	}
 
-	fmt.Println("Clipboard Manager started. Press Ctrl+C to stop.")
+	if len(os.Args) > 1 && os.Args[1] == "tray" {
+		fmt.Println("Starting Clipboard Manager with system tray...")
+		runWithSystemTray()
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "daemon" {
+		fmt.Println("Clipboard Manager started in daemon mode (no hotkeys).")
+		fmt.Println("Press Ctrl+C to stop.")
+		
+		// graceful exit (Ctrl+C)
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-c
+			fmt.Println("\nSaving clipboard history...")
+			saveHistory()
+			os.Exit(0)
+		}()
+
+		watchClipboard() // start daemon without hotkeys
+		return
+	}
+
+	fmt.Println("Clipboard Manager started with system integration.")
+
+	// Start clipboard monitoring in background
+	go watchClipboard()
 
 	// graceful exit (Ctrl+C)
 	c := make(chan os.Signal, 1)
@@ -58,7 +91,8 @@ func main() {
 		os.Exit(0)
 	}()
 
-	watchClipboard() // start daemon
+	// Setup system hotkeys and keep running
+	setupLinuxHotkeys()
 }
 
 // Check if we have the necessary environment and tools
@@ -93,28 +127,91 @@ func watchClipboard() {
 		}
 	}()
 	
+	errorCount := 0
+	maxErrors := 5
+	
 	for {
 		text, err := clipboard.ReadAll()
 		if err != nil {
-			fmt.Printf("Clipboard read error: %v\n", err)
-			time.Sleep(2 * time.Second)
+			errorCount++
+			if errorCount <= maxErrors {
+				fmt.Printf("Clipboard read error (%d/%d): %v\n", errorCount, maxErrors, err)
+			}
+			if errorCount >= maxErrors {
+				fmt.Println("Too many clipboard errors, reducing check frequency...")
+				time.Sleep(5 * time.Second)
+			} else {
+				time.Sleep(2 * time.Second)
+			}
 			continue
 		}
+		
+		// Reset error count on successful read
+		errorCount = 0
 		
 		// Clean up the text
 		text = strings.TrimSpace(text)
 		
-		if text != "" && text != last && len(text) > 0 {
-			addToHistory(text)
-			last = text
-			fmt.Printf("Copied: %.50s", text)
-			if len(text) > 50 {
-				fmt.Print("...")
-			}
-			fmt.Println()
+		// Skip empty or very short text
+		if len(text) < 2 {
+			time.Sleep(500 * time.Millisecond)
+			continue
 		}
-		time.Sleep(1 * time.Second) // Reduced frequency to be less resource intensive
+		
+		// Skip if same as last
+		if text == last {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		
+		// Skip if it looks like system clipboard noise
+		if isSystemNoise(text) {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		
+		addToHistory(text)
+		last = text
+		
+		// Only show notification for meaningful content
+		if len(text) > 5 {
+			displayText := text
+			if len(displayText) > 60 {
+				displayText = displayText[:60] + "..."
+			}
+			// Replace newlines for cleaner output
+			displayText = strings.ReplaceAll(displayText, "\n", " ")
+			fmt.Printf("📋 Copied: %s\n", displayText)
+		}
+		
+		time.Sleep(500 * time.Millisecond)
 	}
+}
+
+// Check if text is likely system noise
+func isSystemNoise(text string) bool {
+	// Skip very short text
+	if len(text) < 3 {
+		return true
+	}
+	
+	// Skip common system clipboard noise patterns
+	noisePatterns := []string{
+		"signal\"",
+		"syscall\"",
+		"time\"",
+		"import",
+		"package",
+		"func",
+	}
+	
+	for _, pattern := range noisePatterns {
+		if strings.Contains(text, pattern) && len(text) < 50 {
+			return true
+		}
+	}
+	
+	return false
 }
 
 // Terminal-based history viewer as fallback
