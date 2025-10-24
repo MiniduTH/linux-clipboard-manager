@@ -2,6 +2,8 @@
 
 A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) that tracks your clipboard history and allows you to restore previous clipboard entries with a global hotkey.
 
+**🚀 No Go installation required!** Download pre-built binaries from [Releases](https://github.com/MiniduTH/linux-clipboard-manager/releases) or see [DOWNLOAD.md](DOWNLOAD.md) for quick installation.
+
 ## ✨ Features
 
 - 📋 **Smart clipboard monitoring** with automatic filtering
@@ -18,7 +20,22 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 
 ## 🚀 Quick Start
 
-### Option 1: Simple Installation (Recommended)
+### Option 1: No Go Required (Recommended for Most Users)
+
+**Download pre-built release:**
+1. Go to [Releases](https://github.com/MiniduTH/linux-clipboard-manager/releases)
+2. Download `clipboard-manager-release.tar.gz`
+3. Extract and install:
+   ```bash
+   tar -xzf clipboard-manager-release.tar.gz
+   cd release/
+   chmod +x install.sh
+   ./install.sh
+   ```
+
+That's it! Press **Super+V** (Windows key + V) from anywhere to access your clipboard history.
+
+### Option 2: Build from Source (For Developers)
 
 ```bash
 # Clone and install in one go
@@ -26,8 +43,6 @@ git clone https://github.com/MiniduTH/linux-clipboard-manager.git
 cd linux-clipboard-manager
 make install
 ```
-
-That's it! Press **Super+V** (Windows key + V) from anywhere to access your clipboard history.
 
 ### Option 2: Manual Setup
 
@@ -348,6 +363,19 @@ make install  # Install with hotkeys
 # Cleanup
 make clean    # Clean build files
 make uninstall-complete  # Remove everything
+```
+
+### Creating Releases (For Maintainers)
+
+```bash
+# Create release binaries for all architectures
+make release
+
+# Create distributable archive
+make dist
+
+# The archive will be at: build/clipboard-manager-release.tar.gz
+# Users can extract and run ./install.sh without Go installed
 ```
 
 ## 🔧 Troubleshooting

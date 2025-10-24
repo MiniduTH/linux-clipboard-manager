@@ -1,6 +1,6 @@
 # Makefile for Clipboard Manager
 
-.PHONY: build test clean install uninstall help deps run daemon show build-all release test-coverage
+.PHONY: build test clean install uninstall help deps run daemon show build-all release test-coverage dist
 
 # Default target
 all: build
@@ -28,18 +28,162 @@ build-all:
 	@echo "✅ All builds completed!"
 	@ls -la build/clipboard-manager*
 
-# Create release package
-release: build-all
-	@echo "📦 Creating release package..."
+# Create release package with binaries for different architectures
+release: clean
+	@echo "📦 Creating release binaries for multiple architectures..."
 	@mkdir -p build/release
-	@cp build/clipboard-manager build/release/
+	
+	@echo "Building for Linux x86_64..."
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/release/clipboard-manager-linux-amd64
+	
+	@echo "Building for Linux ARM64 (may require cross-compilation tools)..."
+	@if command -v aarch64-linux-gnu-gcc >/dev/null 2>&1; then \
+		CC=aarch64-linux-gnu-gcc CGO_ENABLED=1 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o build/release/clipboard-manager-linux-arm64 || \
+		echo "⚠️  ARM64 build failed - cross-compilation tools may be missing"; \
+	else \
+		echo "⚠️  Skipping ARM64 build - cross-compilation tools not available"; \
+		echo "   Install with: sudo apt install gcc-aarch64-linux-gnu"; \
+	fi
+	
+	@echo "Building for Linux x86 (32-bit)..."
+	@if command -v gcc-multilib >/dev/null 2>&1 || dpkg -l | grep -q gcc-multilib; then \
+		CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -o build/release/clipboard-manager-linux-386 || \
+		echo "⚠️  32-bit build failed"; \
+	else \
+		echo "⚠️  Skipping 32-bit build - multilib not available"; \
+		echo "   Install with: sudo apt install gcc-multilib"; \
+	fi
+	
+	@echo "Creating installation script..."
+	@echo '#!/bin/bash' > build/release/install.sh
+	@echo 'set -e' >> build/release/install.sh
+	@echo '' >> build/release/install.sh
+	@echo 'echo "🚀 Installing Clipboard Manager..."' >> build/release/install.sh
+	@echo '' >> build/release/install.sh
+	@echo '# Detect architecture and find available binary' >> build/release/install.sh
+	@echo 'ARCH=$$(uname -m)' >> build/release/install.sh
+	@echo 'BINARY=""' >> build/release/install.sh
+	@echo '' >> build/release/install.sh
+	@echo '# Try to find the best binary for this architecture' >> build/release/install.sh
+	@echo 'case $$ARCH in' >> build/release/install.sh
+	@echo '    x86_64)' >> build/release/install.sh
+	@echo '        if [ -f "clipboard-manager-linux-amd64" ]; then' >> build/release/install.sh
+	@echo '            BINARY="clipboard-manager-linux-amd64"' >> build/release/install.sh
+	@echo '        fi ;;' >> build/release/install.sh
+	@echo '    aarch64|arm64)' >> build/release/install.sh
+	@echo '        if [ -f "clipboard-manager-linux-arm64" ]; then' >> build/release/install.sh
+	@echo '            BINARY="clipboard-manager-linux-arm64"' >> build/release/install.sh
+	@echo '        elif [ -f "clipboard-manager-linux-amd64" ]; then' >> build/release/install.sh
+	@echo '            echo "⚠️  ARM64 binary not available, trying x86_64 (may not work)"' >> build/release/install.sh
+	@echo '            BINARY="clipboard-manager-linux-amd64"' >> build/release/install.sh
+	@echo '        fi ;;' >> build/release/install.sh
+	@echo '    i386|i686)' >> build/release/install.sh
+	@echo '        if [ -f "clipboard-manager-linux-386" ]; then' >> build/release/install.sh
+	@echo '            BINARY="clipboard-manager-linux-386"' >> build/release/install.sh
+	@echo '        elif [ -f "clipboard-manager-linux-amd64" ]; then' >> build/release/install.sh
+	@echo '            echo "⚠️  32-bit binary not available, trying x86_64"' >> build/release/install.sh
+	@echo '            BINARY="clipboard-manager-linux-amd64"' >> build/release/install.sh
+	@echo '        fi ;;' >> build/release/install.sh
+	@echo '    *)' >> build/release/install.sh
+	@echo '        echo "⚠️  Unknown architecture: $$ARCH, trying x86_64 binary"' >> build/release/install.sh
+	@echo '        if [ -f "clipboard-manager-linux-amd64" ]; then' >> build/release/install.sh
+	@echo '            BINARY="clipboard-manager-linux-amd64"' >> build/release/install.sh
+	@echo '        fi ;;' >> build/release/install.sh
+	@echo 'esac' >> build/release/install.sh
+	@echo '' >> build/release/install.sh
+	@echo 'if [ -z "$$BINARY" ]; then' >> build/release/install.sh
+	@echo '    echo "❌ No compatible binary found for architecture: $$ARCH"' >> build/release/install.sh
+	@echo '    echo "Available binaries:"' >> build/release/install.sh
+	@echo '    ls -1 clipboard-manager-linux-* 2>/dev/null || echo "  None found"' >> build/release/install.sh
+	@echo '    exit 1' >> build/release/install.sh
+	@echo 'fi' >> build/release/install.sh
+	@echo '' >> build/release/install.sh
+	@echo 'echo "📥 Installing $$BINARY to /usr/local/bin/clipboard-manager..."' >> build/release/install.sh
+	@echo 'sudo cp "$$BINARY" /usr/local/bin/clipboard-manager' >> build/release/install.sh
+	@echo 'sudo chmod +x /usr/local/bin/clipboard-manager' >> build/release/install.sh
+	@echo '' >> build/release/install.sh
+	@echo 'echo "🔧 Setting up desktop integration..."' >> build/release/install.sh
+	@echo 'mkdir -p ~/.local/share/applications' >> build/release/install.sh
+	@echo 'cat > ~/.local/share/applications/clipboard-manager.desktop << EOF' >> build/release/install.sh
+	@echo '[Desktop Entry]' >> build/release/install.sh
+	@echo 'Name=Clipboard Manager' >> build/release/install.sh
+	@echo 'Comment=Clipboard history manager for Linux' >> build/release/install.sh
+	@echo 'Exec=/usr/local/bin/clipboard-manager show' >> build/release/install.sh
+	@echo 'Icon=edit-copy' >> build/release/install.sh
+	@echo 'Terminal=false' >> build/release/install.sh
+	@echo 'Type=Application' >> build/release/install.sh
+	@echo 'Categories=Utility;' >> build/release/install.sh
+	@echo 'Keywords=clipboard;history;copy;paste;' >> build/release/install.sh
+	@echo 'EOF' >> build/release/install.sh
+	@echo '' >> build/release/install.sh
+	@echo 'echo "🔑 Setting up hotkey (Super+V)..."' >> build/release/install.sh
+	@echo '/usr/local/bin/clipboard-manager daemon > /dev/null 2>&1 &' >> build/release/install.sh
+	@echo '' >> build/release/install.sh
+	@echo 'echo "✅ Installation completed!"' >> build/release/install.sh
+	@echo 'echo "   • Binary: /usr/local/bin/clipboard-manager"' >> build/release/install.sh
+	@echo 'echo "   • Desktop entry: ~/.local/share/applications/clipboard-manager.desktop"' >> build/release/install.sh
+	@echo 'echo "   • Hotkey: Super+V (configured automatically)"' >> build/release/install.sh
+	@echo 'echo ""' >> build/release/install.sh
+	@echo 'echo "Usage:"' >> build/release/install.sh
+	@echo 'echo "   • Press Super+V from anywhere to open clipboard history"' >> build/release/install.sh
+	@echo 'echo "   • Run clipboard-manager help for more options"' >> build/release/install.sh
+	
+	@chmod +x build/release/install.sh
+	
+	@echo "Copying documentation..."
 	@cp README.md build/release/
-	@cp LICENSE build/release/
-	@cp -r scripts build/release/
-	@cp -r docs build/release/
+	@cp INSTALL.md build/release/
+	@cp LICENSE build/release/ 2>/dev/null || echo "LICENSE file not found, skipping..."
+	
+	@echo "Creating usage instructions..."
+	@echo '# Clipboard Manager - Pre-built Release' > build/release/README-RELEASE.md
+	@echo '' >> build/release/README-RELEASE.md
+	@echo '## Quick Installation (No Go Required)' >> build/release/README-RELEASE.md
+	@echo '' >> build/release/README-RELEASE.md
+	@echo '```bash' >> build/release/README-RELEASE.md
+	@echo '# Make install script executable and run it' >> build/release/README-RELEASE.md
+	@echo 'chmod +x install.sh' >> build/release/README-RELEASE.md
+	@echo './install.sh' >> build/release/README-RELEASE.md
+	@echo '```' >> build/release/README-RELEASE.md
+	@echo '' >> build/release/README-RELEASE.md
+	@echo 'That'\''s it! Press **Super+V** to open clipboard history.' >> build/release/README-RELEASE.md
+	@echo '' >> build/release/README-RELEASE.md
+	@echo '## Manual Installation' >> build/release/README-RELEASE.md
+	@echo '' >> build/release/README-RELEASE.md
+	@echo '1. Choose the right binary for your system:' >> build/release/README-RELEASE.md
+	@echo '   - `clipboard-manager-linux-amd64` - 64-bit Intel/AMD (most common)' >> build/release/README-RELEASE.md
+	@echo '   - `clipboard-manager-linux-arm64` - 64-bit ARM (Raspberry Pi 4, Apple Silicon)' >> build/release/README-RELEASE.md
+	@echo '   - `clipboard-manager-linux-386` - 32-bit Intel/AMD (older systems)' >> build/release/README-RELEASE.md
+	@echo '' >> build/release/README-RELEASE.md
+	@echo '2. Install manually:' >> build/release/README-RELEASE.md
+	@echo '```bash' >> build/release/README-RELEASE.md
+	@echo '# Replace with your architecture' >> build/release/README-RELEASE.md
+	@echo 'sudo cp clipboard-manager-linux-amd64 /usr/local/bin/clipboard-manager' >> build/release/README-RELEASE.md
+	@echo 'sudo chmod +x /usr/local/bin/clipboard-manager' >> build/release/README-RELEASE.md
+	@echo '```' >> build/release/README-RELEASE.md
+	@echo '' >> build/release/README-RELEASE.md
+	@echo '## Usage' >> build/release/README-RELEASE.md
+	@echo '' >> build/release/README-RELEASE.md
+	@echo '- Press **Super+V** to open clipboard history' >> build/release/README-RELEASE.md
+	@echo '- Run `clipboard-manager help` for all options' >> build/release/README-RELEASE.md
+	@echo '- Run `clipboard-manager list` for terminal interface' >> build/release/README-RELEASE.md
+	
 	@echo "✅ Release package created in build/release/"
 	@echo "Contents:"
 	@ls -la build/release/
+	@echo ""
+	@echo "📦 Ready for distribution! Users can run ./install.sh without Go installed."
+
+# Create distributable archive
+dist: release
+	@echo "📦 Creating distributable archive..."
+	@cd build && tar -czf clipboard-manager-release.tar.gz release/
+	@echo "✅ Created build/clipboard-manager-release.tar.gz"
+	@echo "📤 Ready to distribute! Users can:"
+	@echo "   1. Download and extract the archive"
+	@echo "   2. Run ./install.sh (no Go required)"
+	@echo ""
+	@echo "Archive size: $$(du -h build/clipboard-manager-release.tar.gz | cut -f1)"
 
 # Run all tests
 test:
@@ -144,6 +288,7 @@ help:
 	@echo "  build          - Build the clipboard manager binary"
 	@echo "  build-all      - Build multiple variants (standard, debug, optimized)"
 	@echo "  release        - Create release package with documentation"
+	@echo "  dist           - Create distributable archive (no Go required)"
 	@echo "  test           - Run all tests"
 	@echo "  test-coverage  - Run tests with coverage report"
 	@echo "  clean          - Clean build artifacts"

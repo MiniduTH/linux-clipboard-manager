@@ -1,14 +1,49 @@
 # Installation Guide
 
-## Quick Install (Recommended)
+## For Users WITHOUT Go Installed (Recommended)
+
+### Option 1: Download Pre-built Release
+
+1. **Download** the latest release from GitHub releases page
+2. **Extract** the archive:
+   ```bash
+   tar -xzf clipboard-manager-release.tar.gz
+   cd release/
+   ```
+3. **Install** automatically:
+   ```bash
+   chmod +x install.sh
+   ./install.sh
+   ```
+
+That's it! Press **Super+V** (Windows key + V) from anywhere to access your clipboard history.
+
+### Option 2: Manual Installation (Pre-built)
+
+1. **Choose your architecture**:
+   - `clipboard-manager-linux-amd64` - 64-bit Intel/AMD (most common)
+   - `clipboard-manager-linux-arm64` - 64-bit ARM (Raspberry Pi 4, etc.)
+   - `clipboard-manager-linux-386` - 32-bit Intel/AMD (older systems)
+
+2. **Install manually**:
+   ```bash
+   # Replace with your architecture
+   sudo cp clipboard-manager-linux-amd64 /usr/local/bin/clipboard-manager
+   sudo chmod +x /usr/local/bin/clipboard-manager
+   
+   # Test it works
+   clipboard-manager help
+   ```
+
+## For Developers WITH Go Installed
+
+### Quick Install from Source
 
 ```bash
 git clone https://github.com/MiniduTH/linux-clipboard-manager.git
 cd linux-clipboard-manager
 make install
 ```
-
-That's it! Press **Super+V** (Windows key + V) from anywhere to access your clipboard history.
 
 ## Build System
 
