@@ -174,8 +174,8 @@ func refreshUI(w fyne.Window) {
 }
 
 func showPopup() error {
-	// Try to create the app with error handling
-	a := app.New()
+	// Try to create the app with error handling with proper ID
+	a := app.NewWithID("com.clipboard.manager")
 	if a == nil {
 		return fmt.Errorf("failed to create GUI application")
 	}

@@ -10,6 +10,7 @@ import (
 // Setup system-level hotkey using gsettings (GNOME) or other methods
 func setupLinuxHotkeys() {
 	fmt.Println("Setting up system hotkey integration...")
+	fmt.Println("This will configure Super+Z to open the clipboard GUI.")
 	
 	// Get the absolute path to the current executable
 	execPath, err := os.Executable()
@@ -21,8 +22,10 @@ func setupLinuxHotkeys() {
 	// Try to set up GNOME hotkey
 	if setupGnomeHotkey(execPath) {
 		fmt.Println("✓ GNOME hotkey configured: Super+Z")
+		fmt.Println("  Press Super+Z from anywhere to open clipboard history")
 	} else if setupKDEHotkey(execPath) {
 		fmt.Println("✓ KDE hotkey configured: Super+Z")
+		fmt.Println("  Press Super+Z from anywhere to open clipboard history")
 	} else {
 		fmt.Println("⚠ Could not configure system hotkey automatically")
 		fmt.Println("Manual setup instructions:")
@@ -34,7 +37,8 @@ func setupLinuxHotkeys() {
 	}
 	
 	// Keep the application running
-	fmt.Println("Clipboard manager is running. Press Ctrl+C to stop.")
+	fmt.Println("Clipboard manager is running in background. Press Ctrl+C to stop.")
+	fmt.Println("The GUI will only open when you press Super+Z or run 'clipboard-manager show'")
 	select {} // Block forever
 }
 

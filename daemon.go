@@ -12,15 +12,34 @@ import (
 
 // Check if clipboard daemon is running
 func isDaemonRunning() bool {
-	// Check for running clipboard-manager processes
-	cmd := exec.Command("pgrep", "-f", "clipboard-manager daemon")
+	// Check for running clipboard-manager processes (any daemon mode)
+	cmd := exec.Command("pgrep", "-f", "clipboard-manager")
 	output, err := cmd.Output()
 	if err != nil {
 		return false
 	}
 	
 	pids := strings.TrimSpace(string(output))
-	return pids != ""
+	if pids == "" {
+		return false
+	}
+	
+	// Check if any of the processes are daemon processes
+	for _, pid := range strings.Split(pids, "\n") {
+		pid = strings.TrimSpace(pid)
+		if pid != "" {
+			// Check the command line of this process
+			cmdlineFile := fmt.Sprintf("/proc/%s/cmdline", pid)
+			if cmdline, err := os.ReadFile(cmdlineFile); err == nil {
+				cmdStr := string(cmdline)
+				if strings.Contains(cmdStr, "daemon") {
+					return true
+				}
+			}
+		}
+	}
+	
+	return false
 }
 
 // Start daemon if not running

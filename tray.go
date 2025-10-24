@@ -10,7 +10,7 @@ import (
 
 // System tray integration
 func setupSystemTray() {
-	a := app.New()
+	a := app.NewWithID("com.clipboard.manager")
 	a.SetIcon(nil)
 	
 	if desk, ok := a.(desktop.App); ok {

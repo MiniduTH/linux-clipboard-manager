@@ -51,6 +51,7 @@ func main() {
 		fmt.Println("  ./clipboard-manager daemon-text-only - Start daemon (text only, no image monitoring)")
 		fmt.Println("  ./clipboard-manager daemon-minimal   - Start daemon (ultra-minimal polling)")
 		fmt.Println("  ./clipboard-manager daemon-passive   - Start daemon (no auto-monitoring)")
+		fmt.Println("  ./clipboard-manager daemon-only      - Start daemon only (no hotkeys)")
 		fmt.Println("  ./clipboard-manager capture          - Manually capture current clipboard")
 		fmt.Println("  ./clipboard-manager status       - Show daemon status")
 		fmt.Println("  ./clipboard-manager stop         - Stop daemon")
@@ -59,6 +60,7 @@ func main() {
 		fmt.Println("System Integration:")
 		fmt.Println("  The app will try to set up Super+Z hotkey automatically")
 		fmt.Println("  Use 'tray' mode for system tray integration")
+		fmt.Println("  Use 'daemon-only' to run without hotkeys or GUI")
 		fmt.Println("  The daemon runs in background to monitor clipboard")
 		fmt.Println("  Use 'daemon-minimal' or 'daemon-passive' if you experience clicking/menu issues")
 		return
@@ -81,6 +83,12 @@ func main() {
 	}
 
 	if len(os.Args) > 1 && os.Args[1] == "daemon" {
+		// Check if daemon is already running
+		if isDaemonRunning() {
+			fmt.Println("Clipboard daemon is already running. Use 'clipboard-manager stop' to stop it first.")
+			os.Exit(1)
+		}
+		
 		fmt.Println("Clipboard Manager started in daemon mode (no hotkeys).")
 		fmt.Println("Press Ctrl+C to stop.")
 		
@@ -153,6 +161,26 @@ func main() {
 		select {}
 	}
 
+	if len(os.Args) > 1 && os.Args[1] == "daemon-only" {
+		fmt.Println("Clipboard Manager started in daemon-only mode (no hotkeys, no GUI).")
+		fmt.Println("Text-only monitoring to avoid any window creation.")
+		fmt.Println("Use './clipboard-manager show' to open GUI manually.")
+		fmt.Println("Press Ctrl+C to stop.")
+		
+		// graceful exit (Ctrl+C)
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-c
+			fmt.Println("\nClosing database...")
+			closeDatabase()
+			os.Exit(0)
+		}()
+
+		watchClipboardTextOnly() // start daemon without hotkeys, GUI, or image monitoring
+		return
+	}
+
 	if len(os.Args) > 1 && os.Args[1] == "capture" {
 		// Manual clipboard capture
 		text, err := clipboard.ReadAll()
@@ -171,7 +199,16 @@ func main() {
 		return
 	}
 
+	// Default mode: Start with system integration and hotkeys
+	// Check if daemon is already running
+	if isDaemonRunning() {
+		fmt.Println("Clipboard daemon is already running. Use 'clipboard-manager stop' to stop it first.")
+		os.Exit(1)
+	}
+	
 	fmt.Println("Clipboard Manager started with system integration.")
+	fmt.Println("Note: This will set up hotkeys but won't show GUI automatically.")
+	fmt.Println("Use 'clipboard-manager show' or press Super+Z to open the GUI.")
 
 	// Start clipboard monitoring in background
 	go watchClipboard()
@@ -186,7 +223,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	// Setup system hotkeys and keep running
+	// Setup system hotkeys and keep running (but don't auto-show GUI)
 	setupLinuxHotkeys()
 }
 
