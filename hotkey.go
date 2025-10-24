@@ -10,7 +10,7 @@ import (
 // Setup system-level hotkey using gsettings (GNOME) or other methods
 func setupLinuxHotkeys() {
 	fmt.Println("Setting up system hotkey integration...")
-	fmt.Println("This will configure Super+V to open the clipboard GUI.")
+	fmt.Println("This will configure Ctrl+Shift+V to open the clipboard GUI.")
 	
 	// Get the absolute path to the current executable
 	execPath, err := os.Executable()
@@ -21,11 +21,11 @@ func setupLinuxHotkeys() {
 	
 	// Try to set up GNOME hotkey
 	if setupGnomeHotkey(execPath) {
-		fmt.Println("✓ GNOME hotkey configured: Super+V")
-		fmt.Println("  Press Super+V from anywhere to open clipboard history")
+		fmt.Println("✓ GNOME hotkey configured: Ctrl+Shift+V")
+		fmt.Println("  Press Ctrl+Shift+V from anywhere to open clipboard history")
 	} else if setupKDEHotkey(execPath) {
-		fmt.Println("✓ KDE hotkey configured: Super+V")
-		fmt.Println("  Press Super+V from anywhere to open clipboard history")
+		fmt.Println("✓ KDE hotkey configured: Ctrl+Shift+V")
+		fmt.Println("  Press Ctrl+Shift+V from anywhere to open clipboard history")
 	} else {
 		fmt.Println("⚠ Could not configure system hotkey automatically")
 		fmt.Println("Manual setup instructions:")
@@ -33,12 +33,12 @@ func setupLinuxHotkeys() {
 		fmt.Println("2. Go to Keyboard Shortcuts")
 		fmt.Println("3. Add a custom shortcut:")
 		fmt.Printf("   Command: %s show\n", execPath)
-		fmt.Println("   Shortcut: Super+V")
+		fmt.Println("   Shortcut: Ctrl+Shift+V")
 	}
 	
 	// Keep the application running
 	fmt.Println("Clipboard manager is running in background. Press Ctrl+C to stop.")
-	fmt.Println("The GUI will only open when you press Super+V or run 'clipboard-manager show'")
+	fmt.Println("The GUI will only open when you press Ctrl+Shift+V or run 'clipboard-manager show'")
 	select {} // Block forever
 }
 
@@ -57,7 +57,7 @@ func setupGnomeHotkey(execPath string) bool {
 		{"gsettings", "set", schemaPath, "custom-keybindings", "['" + customPath + "']"},
 		{"gsettings", "set", schemaPath + ".custom-keybinding:" + customPath, "name", "Clipboard Manager"},
 		{"gsettings", "set", schemaPath + ".custom-keybinding:" + customPath, "command", execPath + " show"},
-		{"gsettings", "set", schemaPath + ".custom-keybinding:" + customPath, "binding", "<Super>v"},
+		{"gsettings", "set", schemaPath + ".custom-keybinding:" + customPath, "binding", "<Primary><Shift>v"},
 	}
 	
 	for _, cmd := range commands {
@@ -79,7 +79,7 @@ func setupKDEHotkey(execPath string) bool {
 	
 	commands := [][]string{
 		{"kwriteconfig5", "--file", "kglobalshortcutsrc", "--group", "clipboard-manager", "--key", "_k_friendly_name", "Clipboard Manager"},
-		{"kwriteconfig5", "--file", "kglobalshortcutsrc", "--group", "clipboard-manager", "--key", "show", "Meta+V,none,Show Clipboard History"},
+		{"kwriteconfig5", "--file", "kglobalshortcutsrc", "--group", "clipboard-manager", "--key", "show", "Ctrl+Shift+V,none,Show Clipboard History"},
 	}
 	
 	for _, cmd := range commands {

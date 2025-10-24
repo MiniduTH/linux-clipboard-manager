@@ -58,7 +58,7 @@ func main() {
 		fmt.Println("  ./clipboard-manager help         - Show this help")
 		fmt.Println()
 		fmt.Println("System Integration:")
-		fmt.Println("  The app will try to set up Super+V hotkey automatically")
+		fmt.Println("  The app will try to set up Ctrl+Shift+V hotkey automatically")
 		fmt.Println("  Use 'tray' mode for system tray integration")
 		fmt.Println("  Use 'daemon-only' to run without hotkeys or GUI")
 		fmt.Println("  The daemon runs in background to monitor clipboard")
@@ -208,7 +208,7 @@ func main() {
 	
 	fmt.Println("Clipboard Manager started with system integration.")
 	fmt.Println("Note: This will set up hotkeys but won't show GUI automatically.")
-	fmt.Println("Use 'clipboard-manager show' or press Super+V to open the GUI.")
+	fmt.Println("Use 'clipboard-manager show' or press Ctrl+Shift+V to open the GUI.")
 
 	// Start clipboard monitoring in background
 	go watchClipboard()
