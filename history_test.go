@@ -137,7 +137,10 @@ func TestClearHistory(t *testing.T) {
 	}
 	addTestItems(t, testItems)
 	
-	clearHistory()
+	err := clearHistory()
+	if err != nil {
+		t.Fatalf("clearHistory() failed: %v", err)
+	}
 	
 	actualLen := getTestHistoryLength()
 	if actualLen != 0 {
@@ -163,7 +166,10 @@ func TestClearHistoryWithCallback(t *testing.T) {
 		callbackCalled = true
 	}
 	
-	clearHistory(callback)
+	err := clearHistory(callback)
+	if err != nil {
+		t.Fatalf("clearHistory() failed: %v", err)
+	}
 	
 	actualLen := getTestHistoryLength()
 	if actualLen != 0 {
@@ -199,7 +205,10 @@ func TestClearHistoryWithMultipleCallbacks(t *testing.T) {
 		callback2Called = true
 	}
 	
-	clearHistory(callback1, callback2)
+	err := clearHistory(callback1, callback2)
+	if err != nil {
+		t.Fatalf("clearHistory() failed: %v", err)
+	}
 	
 	actualLen := getTestHistoryLength()
 	if actualLen != 0 {
@@ -278,7 +287,9 @@ func TestConcurrentClearAndRemove(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		time.Sleep(10 * time.Millisecond) // Small delay
-		clearHistory()
+		if err := clearHistory(); err != nil {
+			t.Errorf("clearHistory() failed: %v", err)
+		}
 	}()
 	
 	// Goroutine 2: Try to remove items

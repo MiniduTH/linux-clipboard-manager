@@ -128,11 +128,17 @@ func refreshUI(w fyne.Window) {
 			clearBtn.SetText("Clearing...")
 			clearBtn.Disable()
 			
-			// Clear history with UI callback
-			clearHistory(func() {
+			// Clear history with proper error handling
+			err := clearHistory(func() {
 				// UI callback after clearing history - refresh to empty state
 				refreshUI(w)
 			})
+			
+			// If clearing failed, re-enable the button
+			if err != nil {
+				clearBtn.SetText("Clear History")
+				clearBtn.Enable()
+			}
 		})
 		clearAllBtn.Importance = widget.DangerImportance
 		

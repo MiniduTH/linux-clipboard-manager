@@ -173,14 +173,14 @@ func removeHistoryItem(index int) {
 }
 
 // Clear all history with optional UI callback
-func clearHistory(onComplete ...func()) {
+func clearHistory(onComplete ...func()) error {
 	historyMu.Lock()
 	defer historyMu.Unlock()
 	
 	// Clear from database
 	if err := clearClipboardHistory(); err != nil {
 		fmt.Printf("Error clearing history from database: %v\n", err)
-		return
+		return err
 	}
 	
 	// Clear in-memory history
@@ -193,6 +193,8 @@ func clearHistory(onComplete ...func()) {
 			callback()
 		}
 	}
+	
+	return nil
 }
 
 func getHistoryFile() string {

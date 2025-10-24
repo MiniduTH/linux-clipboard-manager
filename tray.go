@@ -25,7 +25,9 @@ func setupSystemTray() {
 			}),
 			fyne.NewMenuItemSeparator(),
 			fyne.NewMenuItem("Clear History", func() {
-				clearHistory()
+				if err := clearHistory(); err != nil {
+					fmt.Printf("Error clearing history: %v\n", err)
+				}
 			}),
 			fyne.NewMenuItem("Quit", func() {
 				saveHistory()

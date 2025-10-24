@@ -3,6 +3,7 @@ name: Build and Test
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
 
@@ -41,8 +42,100 @@ jobs:
     - name: Build binary
       run: make build
     
+    - name: Build release package
+      run: make release
+    
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: clipboard-manager-linux
         path: clipboard-manager
+    
+    - name: Upload release package
+      uses: actions/upload-artifact@v4
+      with:
+        name: clipboard-manager-release
+        path: build/release/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download release artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: clipboard-manager-release
+        path: release/
+    
+    - name: Download binary artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: clipboard-manager-linux
+        path: ./
+    
+    - name: Create release archive
+      run: |
+        mkdir -p dist
+        # Create tar.gz archive
+        tar -czf dist/clipboard-manager-linux-amd64.tar.gz -C release .
+        # Create zip archive
+        cd release && zip -r ../dist/clipboard-manager-linux-amd64.zip . && cd ..
+        # Copy standalone binary
+        cp clipboard-manager dist/clipboard-manager-linux-amd64
+        chmod +x dist/clipboard-manager-linux-amd64
+    
+    - name: Generate release tag
+      id: tag
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "prerelease=false" >> $GITHUB_OUTPUT
+        else
+          echo "tag=v$(date +'%Y.%m.%d')-$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+          echo "prerelease=true" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.tag.outputs.tag }}
+        name: Clipboard Manager ${{ steps.tag.outputs.tag }}
+        prerelease: ${{ steps.tag.outputs.prerelease }}
+        generate_release_notes: true
+        files: |
+          dist/clipboard-manager-linux-amd64.tar.gz
+          dist/clipboard-manager-linux-amd64.zip
+          dist/clipboard-manager-linux-amd64
+        body: |
+          ## Clipboard Manager Release ${{ steps.tag.outputs.tag }}
+          
+          ### Downloads
+          - **Linux Binary**: `clipboard-manager-linux-amd64`
+          - **Archive (tar.gz)**: `clipboard-manager-linux-amd64.tar.gz`
+          - **Archive (zip)**: `clipboard-manager-linux-amd64.zip`
+          
+          ### Installation
+          ```bash
+          # Download and install the binary
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.tag.outputs.tag }}/clipboard-manager-linux-amd64
+          chmod +x clipboard-manager-linux-amd64
+          sudo mv clipboard-manager-linux-amd64 /usr/local/bin/clipboard-manager
+          ```
+          
+          ### Usage
+          ```bash
+          # Run the clipboard manager
+          clipboard-manager
+          
+          # Run as daemon
+          clipboard-manager daemon
+          
+          # Show GUI
+          clipboard-manager show
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
