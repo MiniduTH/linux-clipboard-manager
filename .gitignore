@@ -5,12 +5,18 @@
 *.so
 *.dylib
 clipboard-manager
+clipboard-manager-*
+
+# Build directory (except README)
+build/*
+!build/README.md
 
 # Test binary
 *.test
 
 # Output of the go coverage tool
 *.out
+coverage.html
 
 # Go workspace file
 go.work

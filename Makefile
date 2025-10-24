@@ -8,8 +8,38 @@ all: build
 # Build the clipboard manager
 build:
 	@echo "🔨 Building Clipboard Manager..."
+	@mkdir -p build
 	go build -o clipboard-manager
+	@cp clipboard-manager build/
 	@echo "✅ Build completed!"
+	@echo "   • Main binary: ./clipboard-manager"
+	@echo "   • Build copy: ./build/clipboard-manager"
+
+# Build different variants
+build-all:
+	@echo "🔨 Building all variants..."
+	@mkdir -p build
+	@echo "Building standard version..."
+	go build -o build/clipboard-manager
+	@echo "Building with debug info..."
+	go build -gcflags="all=-N -l" -o build/clipboard-manager-debug
+	@echo "Building optimized version..."
+	go build -ldflags="-s -w" -o build/clipboard-manager-optimized
+	@echo "✅ All builds completed!"
+	@ls -la build/clipboard-manager*
+
+# Create release package
+release: build-all
+	@echo "📦 Creating release package..."
+	@mkdir -p build/release
+	@cp build/clipboard-manager build/release/
+	@cp README.md build/release/
+	@cp LICENSE build/release/
+	@cp -r scripts build/release/
+	@cp -r docs build/release/
+	@echo "✅ Release package created in build/release/"
+	@echo "Contents:"
+	@ls -la build/release/
 
 # Run all tests
 test:
@@ -29,6 +59,7 @@ clean:
 	rm -f clipboard-manager
 	rm -f clipboard-manager-test
 	rm -f tests/clipboard-manager-test
+	rm -f build/clipboard-manager*
 	rm -f coverage.out
 	rm -f coverage.html
 	go clean
@@ -73,6 +104,8 @@ help:
 	@echo "Clipboard Manager - Available targets:"
 	@echo ""
 	@echo "  build          - Build the clipboard manager binary"
+	@echo "  build-all      - Build multiple variants (standard, debug, optimized)
+	@echo "  release        - Create release package with documentation"
 	@echo "  test           - Run all tests"
 	@echo "  test-coverage  - Run tests with coverage report"
 	@echo "  clean          - Clean build artifacts"
@@ -86,5 +119,7 @@ help:
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build     # Build the application"
+	@echo "  make build-all # Build all variants"
+	@echo "  make release   # Create release package"
 	@echo "  make test      # Run tests"
 	@echo "  make clean     # Clean up"

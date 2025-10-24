@@ -23,12 +23,20 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 **Ubuntu/Debian:**
 ```bash
 sudo apt update
-sudo apt install -y xclip libgtk-3-dev libayatana-appindicator3-dev
+sudo apt install -y xclip libgtk-3-dev libayatana-appindicator3-dev \
+    libxxf86vm-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
 ```
 
 **Fedora:**
 ```bash
-sudo dnf install -y xclip gtk3-devel libayatana-appindicator-gtk3-devel
+sudo dnf install -y xclip gtk3-devel libayatana-appindicator-gtk3-devel \
+    libXxf86vm-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel mesa-libGL-devel
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S xclip gtk3 libayatana-appindicator \
+    libxxf86vm libxrandr libxinerama libxcursor libxi mesa
 ```
 
 ### 2. Build and Setup
@@ -42,7 +50,7 @@ cd linux-clipboard-manager
 go build -o clipboard-manager
 
 # Quick setup with hotkeys (recommended)
-./setup-hotkey.sh
+./scripts/setup-hotkey.sh
 ```
 
 That's it! Press **Super+Z** (Windows key + Z) from anywhere to access your clipboard history.
@@ -50,7 +58,7 @@ That's it! Press **Super+Z** (Windows key + Z) from anywhere to access your clip
 ## 📖 Usage
 
 ### Global Hotkey (Recommended)
-After running `./setup-hotkey.sh`, press **Super+Z** from anywhere to open clipboard history.
+After running `./scripts/setup-hotkey.sh`, press **Super+Z** from anywhere to open clipboard history.
 
 ### Manual Commands
 
@@ -181,7 +189,7 @@ sudo systemctl --user enable clipboard-manager.service
 ### Hotkey Not Working
 - **Issue**: Super+Z doesn't work
 - **Solutions**:
-  1. Run `./setup-hotkey.sh` again
+  1. Run `./scripts/setup-hotkey.sh` again
   2. Check if running in proper graphical session
   3. Verify `$DISPLAY` or `$WAYLAND_DISPLAY` environment variables
   4. Set up manually in system settings
@@ -192,6 +200,29 @@ sudo systemctl --user enable clipboard-manager.service
   1. Ensure Go 1.21+ is installed
   2. Run `go mod tidy`
   3. Install CGO dependencies for Fyne GUI
+
+## 📁 Project Structure
+
+```
+clipboard-manager/
+├── docs/              # Documentation and guides
+│   ├── CONTRIBUTING.md
+│   └── README.md
+├── scripts/           # Installation and setup scripts
+│   ├── clean-install.sh
+│   ├── install.sh
+│   └── setup-hotkey.sh
+├── tests/             # Test utilities and documentation
+│   ├── run_tests.sh
+│   └── README.md
+├── build/             # Build artifacts (gitignored)
+├── .github/           # GitHub workflows
+├── .kiro/             # Kiro IDE specifications
+├── *.go               # Go source files (main package)
+├── *_test.go          # Go test files
+├── Makefile           # Build automation
+└── README.md          # This file
+```
 
 ## 🛠️ Development
 
@@ -221,9 +252,35 @@ make daemon
 - `make install` - Install system-wide (requires sudo)
 - `make help` - Show all available targets
 
+## 🔧 Troubleshooting
+
+### Build Issues
+
+**Error: `cannot find -lXxf86vm`**
+```bash
+# Ubuntu/Debian
+sudo apt install libxxf86vm-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+
+# Fedora
+sudo dnf install libXxf86vm-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel mesa-libGL-devel
+
+# Arch Linux
+sudo pacman -S libxxf86vm libxrandr libxinerama libxcursor libxi mesa
+```
+
+**Error: GUI doesn't work**
+- Ensure you're running in a graphical environment (X11 or Wayland)
+- Check that `$DISPLAY` or `$WAYLAND_DISPLAY` environment variables are set
+- Install required GUI libraries as shown in the dependencies section
+
+**Error: Clipboard utilities not found**
+- Install at least one clipboard utility: `xclip`, `xsel`, or `wl-clipboard`
+- For Wayland: `sudo apt install wl-clipboard`
+- For X11: `sudo apt install xclip` or `sudo apt install xsel`
+
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
 
 ### Development Setup
 ```bash
