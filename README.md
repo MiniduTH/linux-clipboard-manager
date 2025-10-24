@@ -231,6 +231,33 @@ clipboard-manager/
 └── README.md          # This file
 ```
 
+## 🗑️ Uninstalling
+
+### Complete Uninstall
+To completely remove the clipboard manager from your system:
+
+```bash
+# Using the uninstall script (recommended)
+./scripts/uninstall.sh
+
+# Or using Makefile
+make uninstall-complete
+```
+
+This will remove:
+- System-wide installation
+- Desktop entries and autostart files
+- All clipboard history data
+- Custom keyboard shortcuts
+- Running processes
+- Build artifacts
+
+### System-wide Only
+To remove only the system-wide installation:
+```bash
+make uninstall
+```
+
 ## 🛠️ Development
 
 ### Build Commands
@@ -257,6 +284,8 @@ make daemon
 - `make test-coverage` - Run tests with coverage report
 - `make clean` - Clean build artifacts
 - `make install` - Install system-wide (requires sudo)
+- `make uninstall` - Uninstall system-wide (requires sudo)
+- `make uninstall-complete` - Complete uninstall (removes everything)
 - `make help` - Show all available targets
 
 ## 🔧 Troubleshooting

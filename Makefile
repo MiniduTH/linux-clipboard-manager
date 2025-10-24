@@ -99,6 +99,11 @@ uninstall:
 	sudo rm -f /usr/local/bin/clipboard-manager
 	@echo "✅ Uninstalled from /usr/local/bin/"
 
+# Complete uninstall (removes everything)
+uninstall-complete:
+	@echo "🗑️  Running complete uninstall..."
+	@./scripts/uninstall.sh
+
 # Help
 help:
 	@echo "Clipboard Manager - Available targets:"
@@ -115,6 +120,7 @@ help:
 	@echo "  show           - Show GUI"
 	@echo "  install        - Install system-wide (requires sudo)"
 	@echo "  uninstall      - Uninstall system-wide (requires sudo)"
+	@echo "  uninstall-complete - Complete uninstall (removes everything)"
 	@echo "  help           - Show this help"
 	@echo ""
 	@echo "Examples:"
