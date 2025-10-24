@@ -1,0 +1,115 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24'
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xclip libgtk-3-dev libayatana-appindicator3-dev libxxf86vm-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+    
+    - name: Run tests
+      run: make test
+    
+    - name: Build release package
+      run: make dist
+    
+    - name: Prepare release files
+      run: |
+        mkdir -p release-files
+        # Copy the complete release archive
+        cp build/clipboard-manager-release.tar.gz release-files/
+        # Extract and create individual binary
+        cd build/release
+        cp clipboard-manager-linux-amd64 ../../release-files/ 2>/dev/null || echo "AMD64 binary not found"
+        cp clipboard-manager-linux-arm64 ../../release-files/ 2>/dev/null || echo "ARM64 binary not found"  
+        cp clipboard-manager-linux-386 ../../release-files/ 2>/dev/null || echo "386 binary not found"
+        cd ../..
+        # Make binaries executable
+        chmod +x release-files/clipboard-manager-linux-* 2>/dev/null || true
+        # List what we have
+        ls -la release-files/
+    
+    - name: Extract version from tag
+      id: version
+      run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: Clipboard Manager ${{ steps.version.outputs.version }}
+        generate_release_notes: true
+        files: release-files/*
+        body: |
+          ## 🚀 Clipboard Manager ${{ steps.version.outputs.version }}
+          
+          A powerful clipboard history manager for Linux with **Ctrl+Shift+V** hotkey support and auto-start functionality.
+          
+          ### 📦 Downloads
+          
+          **Recommended (Complete Package):**
+          - `clipboard-manager-release.tar.gz` - Complete package with auto-installer
+          
+          **Individual Binaries:**
+          - `clipboard-manager-linux-amd64` - 64-bit Intel/AMD (most common)
+          - `clipboard-manager-linux-arm64` - 64-bit ARM (Raspberry Pi 4, etc.)
+          - `clipboard-manager-linux-386` - 32-bit Intel/AMD (older systems)
+          
+          ### ⚡ Quick Installation
+          
+          ```bash
+          # Download and auto-install (recommended)
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/clipboard-manager-release.tar.gz
+          tar -xzf clipboard-manager-release.tar.gz
+          cd release/
+          chmod +x install.sh
+          ./install.sh
+          ```
+          
+          ### 🔧 Manual Installation
+          
+          ```bash
+          # Download binary for your architecture
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/clipboard-manager-linux-amd64
+          chmod +x clipboard-manager-linux-amd64
+          sudo mv clipboard-manager-linux-amd64 /usr/local/bin/clipboard-manager
+          ```
+          
+          ### ✨ Features
+          
+          - ✅ **Ctrl+Shift+V hotkey** - Access clipboard history from anywhere
+          - ✅ **Auto-starts on login** - Works immediately after PC restart  
+          - ✅ **GUI and terminal interfaces** - Use what you prefer
+          - ✅ **Image clipboard support** - Handles text and images
+          - ✅ **SQLite database storage** - Reliable and fast
+          - ✅ **Smart duplicate detection** - Clean history management
+          - ✅ **Cross-desktop support** - Works on GNOME, KDE, and others
+          
+          ### 🎯 Usage
+          
+          After installation:
+          - **Press Ctrl+Shift+V** from anywhere to open clipboard history
+          - **Terminal**: `clipboard-manager list` for text interface
+          - **Help**: `clipboard-manager help` for all options
+          
+          The clipboard manager starts automatically on login and runs in the background.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,4 +1,4 @@
-module github.com/MiniduTH/go-clipboard
+module github.com/MiniduTH/linux-clipboard-manager
 
 go 1.24.0
 
