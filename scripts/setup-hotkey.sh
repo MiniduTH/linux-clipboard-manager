@@ -23,7 +23,7 @@ if [ "$XDG_CURRENT_DESKTOP" = "GNOME" ] || [ "$DESKTOP_SESSION" = "gnome" ]; the
     
     # Check if gsettings is available
     if command -v gsettings &> /dev/null; then
-        echo "Setting up GNOME hotkey (Super+Z)..."
+        echo "Setting up GNOME hotkey (Super+V)..."
         
         # Get current custom keybindings
         CURRENT_BINDINGS=$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings)
@@ -43,10 +43,10 @@ if [ "$XDG_CURRENT_DESKTOP" = "GNOME" ] || [ "$DESKTOP_SESSION" = "gnome" ]; the
         # Set the custom keybinding
         gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CUSTOM_PATH name "Clipboard Manager"
         gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CUSTOM_PATH command "$EXEC_PATH show"
-        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CUSTOM_PATH binding "<Super>z"
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CUSTOM_PATH binding "<Super>v"
         
         echo "✓ GNOME hotkey configured successfully!"
-        echo "Press Super+Z (Windows key + Z) to open clipboard history"
+        echo "Press Super+V (Windows key + V) to open clipboard history"
     else
         echo "gsettings not found. Please set up the hotkey manually in GNOME Settings."
     fi
@@ -55,11 +55,11 @@ elif [ "$XDG_CURRENT_DESKTOP" = "KDE" ] || [ "$DESKTOP_SESSION" = "plasma" ]; th
     echo "Detected KDE desktop environment"
     
     if command -v kwriteconfig5 &> /dev/null; then
-        echo "Setting up KDE hotkey (Meta+Z)..."
+        echo "Setting up KDE hotkey (Meta+V)..."
         
         # Create the shortcut
         kwriteconfig5 --file kglobalshortcutsrc --group "clipboard-manager.desktop" --key "_k_friendly_name" "Clipboard Manager"
-        kwriteconfig5 --file kglobalshortcutsrc --group "clipboard-manager.desktop" --key "show" "Meta+Z,none,Show Clipboard History"
+        kwriteconfig5 --file kglobalshortcutsrc --group "clipboard-manager.desktop" --key "show" "Meta+V,none,Show Clipboard History"
         
         # Restart KDE shortcuts daemon
         if command -v kquitapp5 &> /dev/null && command -v kstart5 &> /dev/null; then
@@ -67,7 +67,7 @@ elif [ "$XDG_CURRENT_DESKTOP" = "KDE" ] || [ "$DESKTOP_SESSION" = "plasma" ]; th
         fi
         
         echo "✓ KDE hotkey configured successfully!"
-        echo "Press Meta+Z (Windows key + Z) to open clipboard history"
+        echo "Press Meta+V (Windows key + V) to open clipboard history"
     else
         echo "kwriteconfig5 not found. Please set up the hotkey manually in KDE System Settings."
     fi
@@ -81,7 +81,7 @@ else
     echo "3. Add a custom shortcut:"
     echo "   Name: Clipboard Manager"
     echo "   Command: $EXEC_PATH show"
-    echo "   Shortcut: Super+Z (or Windows key + Z)"
+    echo "   Shortcut: Super+V (or Windows key + V)"
 fi
 
 # Create desktop entry
@@ -133,7 +133,7 @@ fi
 
 echo ""
 echo "Setup complete! You can now:"
-echo "1. Press Super+Z to open clipboard history"
+echo "1. Press Super+V to open clipboard history"
 echo "2. Run '$EXEC_PATH help' for more options"
 echo "3. Start the daemon with '$EXEC_PATH daemon'"
 

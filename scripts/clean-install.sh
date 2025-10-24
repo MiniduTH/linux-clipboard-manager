@@ -281,7 +281,7 @@ EOF
         gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CUSTOM_PATH command "$EXEC_PATH show"
         gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$CUSTOM_PATH binding "<Super>z"
         
-        echo "✅ GNOME hotkey configured (Super+Z)"
+        echo "✅ GNOME hotkey configured (Super+V)"
     fi
 fi
 
@@ -289,7 +289,7 @@ echo ""
 echo "🎉 Installation completed successfully!"
 echo ""
 echo "📋 Your Clipboard Manager is ready to use:"
-echo "   • Press Super+Z (Windows key + Z) to open clipboard history"
+echo "   • Press Super+V (Windows key + V) to open clipboard history"
 echo "   • Run './clipboard-manager help' for all options"
 echo "   • Run './clipboard-manager daemon' to start in background"
 echo ""
@@ -327,7 +327,7 @@ echo ""
 echo "✅ Installation and test completed!"
 echo ""
 echo "🎯 Next steps:"
-echo "   1. Press Super+Z (Windows key + Z) to open clipboard history"
+echo "   1. Press Super+V (Windows key + V) to open clipboard history"
 echo "   2. Run './clipboard-manager daemon' to start monitoring in background"
 echo "   3. Run './clipboard-manager help' to see all available options"
 echo ""

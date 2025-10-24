@@ -1,6 +1,6 @@
 # Makefile for Clipboard Manager
 
-.PHONY: build test clean install help
+.PHONY: build test clean install uninstall help deps run daemon show build-all release test-coverage
 
 # Default target
 all: build
@@ -91,25 +91,58 @@ show:
 install: build
 	@echo "📥 Installing system-wide..."
 	sudo cp clipboard-manager /usr/local/bin/
-	@echo "✅ Installed to /usr/local/bin/clipboard-manager"
+	@echo "🔧 Setting up desktop integration..."
+	@mkdir -p ~/.local/share/applications
+	@echo "[Desktop Entry]" > ~/.local/share/applications/clipboard-manager.desktop
+	@echo "Name=Clipboard Manager" >> ~/.local/share/applications/clipboard-manager.desktop
+	@echo "Comment=Clipboard history manager for Linux" >> ~/.local/share/applications/clipboard-manager.desktop
+	@echo "Exec=/usr/local/bin/clipboard-manager show" >> ~/.local/share/applications/clipboard-manager.desktop
+	@echo "Icon=edit-copy" >> ~/.local/share/applications/clipboard-manager.desktop
+	@echo "Terminal=false" >> ~/.local/share/applications/clipboard-manager.desktop
+	@echo "Type=Application" >> ~/.local/share/applications/clipboard-manager.desktop
+	@echo "Categories=Utility;" >> ~/.local/share/applications/clipboard-manager.desktop
+	@echo "Keywords=clipboard;history;copy;paste;" >> ~/.local/share/applications/clipboard-manager.desktop
+	@echo "🔑 Setting up hotkey (Super+V)..."
+	@/usr/local/bin/clipboard-manager daemon > /dev/null 2>&1 &
+	@echo "✅ Installation completed!"
+	@echo "   • Binary: /usr/local/bin/clipboard-manager"
+	@echo "   • Desktop entry: ~/.local/share/applications/clipboard-manager.desktop"
+	@echo "   • Hotkey: Super+V (configured automatically)"
+	@echo ""
+	@echo "Usage:"
+	@echo "   • Press Super+V from anywhere to open clipboard history"
+	@echo "   • Run 'clipboard-manager help' for more options"
 
 # Uninstall system-wide (requires sudo)
 uninstall:
 	@echo "🗑️  Uninstalling system-wide..."
+	@echo "Stopping any running processes..."
+	@pkill -f clipboard-manager || true
+	@echo "Removing system binary..."
 	sudo rm -f /usr/local/bin/clipboard-manager
-	@echo "✅ Uninstalled from /usr/local/bin/"
+	@echo "Removing desktop integration..."
+	@rm -f ~/.local/share/applications/clipboard-manager.desktop
+	@rm -f ~/.config/autostart/clipboard-manager.desktop
+	@echo "Removing hotkey configuration..."
+	@gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings 2>/dev/null || true
+	@echo "✅ System-wide uninstall completed!"
 
 # Complete uninstall (removes everything)
-uninstall-complete:
+uninstall-complete: uninstall
 	@echo "🗑️  Running complete uninstall..."
-	@./scripts/uninstall.sh
+	@echo "Removing user data..."
+	@rm -rf ~/.local/share/clipboard-manager
+	@echo "Removing configuration files..."
+	@rm -f ~/.config/clipboard-manager.conf
+	@echo "✅ Complete uninstall finished!"
+	@echo "All clipboard manager files and data have been removed."
 
 # Help
 help:
 	@echo "Clipboard Manager - Available targets:"
 	@echo ""
 	@echo "  build          - Build the clipboard manager binary"
-	@echo "  build-all      - Build multiple variants (standard, debug, optimized)
+	@echo "  build-all      - Build multiple variants (standard, debug, optimized)"
 	@echo "  release        - Create release package with documentation"
 	@echo "  test           - Run all tests"
 	@echo "  test-coverage  - Run tests with coverage report"

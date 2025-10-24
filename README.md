@@ -5,7 +5,7 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 ## ✨ Features
 
 - 📋 **Smart clipboard monitoring** with automatic filtering
-- ⌨️ **Global hotkey support (Super+Z)** for instant access from anywhere
+- ⌨️ **Global hotkey support (Super+V)** for instant access from anywhere
 - 🖥️ **GUI interface** using Fyne with automatic terminal fallback
 - 🔧 **System tray integration** with right-click menu
 - 💾 **SQLite database storage** with automatic JSON migration (up to 50 items)
@@ -18,7 +18,20 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
+### Option 1: Simple Installation (Recommended)
+
+```bash
+# Clone and install in one go
+git clone https://github.com/MiniduTH/linux-clipboard-manager.git
+cd linux-clipboard-manager
+make install
+```
+
+That's it! Press **Super+V** (Windows key + V) from anywhere to access your clipboard history.
+
+### Option 2: Manual Setup
+
+#### 1. Install Dependencies
 
 **Ubuntu/Debian:**
 ```bash
@@ -39,26 +52,26 @@ sudo pacman -S xclip gtk3 libayatana-appindicator \
     libxxf86vm libxrandr libxinerama libxcursor libxi mesa
 ```
 
-### 2. Build and Setup
+#### 2. Build and Install
 
 ```bash
 # Clone the repository
 git clone https://github.com/MiniduTH/linux-clipboard-manager.git
 cd linux-clipboard-manager
 
-# Build the application
-go build -o clipboard-manager
+# Build and install system-wide
+make build
+make install
 
-# Quick setup with hotkeys (recommended)
-./scripts/setup-hotkey.sh
+# Or just build for development
+make build
+./clipboard-manager help
 ```
-
-That's it! Press **Super+Z** (Windows key + Z) from anywhere to access your clipboard history.
 
 ## 📖 Usage
 
 ### Global Hotkey (Recommended)
-After running `./scripts/setup-hotkey.sh`, press **Super+Z** from anywhere to open clipboard history.
+After running `make install`, press **Super+V** from anywhere to open clipboard history.
 
 ### Manual Commands
 
@@ -152,8 +165,8 @@ If automatic setup doesn't work:
 2. Go to Keyboard Shortcuts
 3. Add a custom shortcut:
    - **Name**: Clipboard Manager
-   - **Command**: `/path/to/clipboard-manager show`
-   - **Shortcut**: Super+Z
+   - **Command**: `/usr/local/bin/clipboard-manager show`
+   - **Shortcut**: Super+V
 
 ### Autostart Setup
 To start automatically on login:
@@ -194,9 +207,9 @@ sudo systemctl --user enable clipboard-manager.service
   ```
 
 ### Hotkey Not Working
-- **Issue**: Super+Z doesn't work
+- **Issue**: Super+V doesn't work
 - **Solutions**:
-  1. Run `./scripts/setup-hotkey.sh` again
+  1. Run `make install` again to reconfigure hotkeys
   2. Check if running in proper graphical session
   3. Verify `$DISPLAY` or `$WAYLAND_DISPLAY` environment variables
   4. Set up manually in system settings
@@ -260,10 +273,25 @@ make uninstall
 
 ## 🛠️ Development
 
-### Build Commands
+### Build System
+
+This project uses a comprehensive Makefile for all build and installation tasks:
+
 ```bash
 # Build the application
 make build
+
+# Build all variants (standard, debug, optimized)
+make build-all
+
+# Install system-wide with hotkey setup
+make install
+
+# Run tests
+make test
+
+# Run tests with coverage
+make test-coverage
 
 # Clean build artifacts
 make clean
@@ -271,22 +299,56 @@ make clean
 # Install dependencies
 make deps
 
-# Run the application
-make run
-
-# Run in daemon mode
-make daemon
+# Create release package
+make release
 ```
 
 ### Available Make Targets
+
+**Build & Development:**
 - `make build` - Build the clipboard manager binary
+- `make build-all` - Build multiple variants (standard, debug, optimized)
+- `make release` - Create release package with documentation
+- `make deps` - Install/update Go dependencies
+- `make clean` - Clean build artifacts
+
+**Testing:**
 - `make test` - Run all tests
 - `make test-coverage` - Run tests with coverage report
-- `make clean` - Clean build artifacts
-- `make install` - Install system-wide (requires sudo)
+
+**Installation:**
+- `make install` - Install system-wide with hotkey setup (requires sudo)
 - `make uninstall` - Uninstall system-wide (requires sudo)
 - `make uninstall-complete` - Complete uninstall (removes everything)
-- `make help` - Show all available targets
+
+**Runtime:**
+- `make run` - Run the application
+- `make daemon` - Run in daemon mode
+- `make show` - Show GUI
+
+**Help:**
+- `make help` - Show all available targets with descriptions
+
+### Quick Development Workflow
+
+```bash
+# Initial setup
+git clone <repository>
+cd clipboard-manager
+make deps
+
+# Development cycle
+make build    # Build
+make test     # Test
+make run      # Test run
+
+# Installation
+make install  # Install with hotkeys
+
+# Cleanup
+make clean    # Clean build files
+make uninstall-complete  # Remove everything
+```
 
 ## 🔧 Troubleshooting
 
@@ -345,7 +407,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 | Feature | This App | Other Tools |
 |---------|----------|-------------|
-| Global Hotkey | ✅ Super+Z | ❌ Usually not |
+| Global Hotkey | ✅ Super+V | ❌ Usually not |
 | GUI + Terminal | ✅ Both | ❌ Usually one |
 | Smart Filtering | ✅ Yes | ❌ No |
 | System Tray | ✅ Yes | ❌ Rare |

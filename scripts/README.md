@@ -27,7 +27,7 @@ Basic installation script for quick setup.
 
 ### `setup-hotkey.sh`
 Sets up system hotkeys and desktop integration:
-- GNOME hotkey configuration (Super+Z)
+- GNOME hotkey configuration (Super+V)
 - KDE hotkey configuration
 - Desktop entry creation
 - Autostart configuration

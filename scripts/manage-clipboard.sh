@@ -22,7 +22,7 @@ show_help() {
     echo ""
     echo "Commands:"
     echo "  start-daemon    - Start clipboard daemon (background monitoring only)"
-    echo "  start-with-gui  - Start with hotkey support (Super+Z opens GUI)"
+    echo "  start-with-gui  - Start with hotkey support (Super+V opens GUI)"
     echo "  start-tray      - Start with system tray integration"
     echo "  show-gui        - Show GUI once (starts daemon if needed)"
     echo "  stop            - Stop all clipboard manager processes"
@@ -82,7 +82,7 @@ case "$1" in
         echo "Starting clipboard manager with hotkey support..."
         stop_all
         "$CLIPBOARD_MANAGER" &
-        echo "✓ Started with hotkey support. Press Super+Z to open GUI."
+        echo "✓ Started with hotkey support. Press Super+V to open GUI."
         ;;
     "start-tray")
         echo "Starting clipboard manager with system tray..."
