@@ -65,8 +65,9 @@ This project uses a comprehensive Makefile for all operations:
 1. **Builds** the clipboard manager binary
 2. **Installs** it to `/usr/local/bin/clipboard-manager`
 3. **Creates** desktop entry for application launcher
-4. **Configures** Super+V hotkey automatically
-5. **Starts** background daemon for clipboard monitoring
+4. **Configures** Ctrl+Shift+V hotkey automatically
+5. **Sets up autostart** - clipboard manager starts automatically on login
+6. **Starts** background daemon for clipboard monitoring
 
 ### Manual Installation Steps
 
@@ -88,9 +89,10 @@ clipboard-manager daemon &
 
 ## Usage After Installation
 
-- **Super+V**: Open clipboard history GUI
+- **Ctrl+Shift+V**: Open clipboard history GUI
 - **Terminal**: `clipboard-manager list` for text interface
 - **Help**: `clipboard-manager help` for all options
+- **Auto-start**: Clipboard manager starts automatically when you login
 
 ## Uninstalling
 

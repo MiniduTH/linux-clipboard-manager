@@ -4,6 +4,8 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 
 **🚀 No Go installation required!** Download pre-built binaries from [Releases](https://github.com/MiniduTH/linux-clipboard-manager/releases) or see [DOWNLOAD.md](DOWNLOAD.md) for quick installation.
 
+**⚡ Auto-starts on login!** Installation automatically sets up the clipboard manager to start when you turn on your PC.
+
 ## ✨ Features
 
 - 📋 **Smart clipboard monitoring** with automatic filtering
@@ -16,7 +18,8 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 - 🐧 **Full Linux support** (X11 and Wayland)
 - 🚀 **Multiple run modes** (daemon, tray, GUI, terminal)
 - ⚡ **Automatic desktop environment detection** (GNOME, KDE)
-- 🔗 **Desktop integration** with .desktop files and autostart
+- 🔗 **Desktop integration** with .desktop files and automatic autostart
+- 🖥️ **Auto-starts on login** - works immediately after PC restart
 
 ## 🚀 Quick Start
 
