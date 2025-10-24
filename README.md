@@ -98,6 +98,36 @@ Shows all available commands and options.
 - **Desktop entries**: `~/.local/share/applications/`
 - **Autostart**: `~/.config/autostart/` (optional)
 
+## 🧪 Testing
+
+The project includes comprehensive tests for all functionality:
+
+### Run Tests
+```bash
+# Using Makefile (recommended)
+make test
+
+# Using test runner script
+./tests/run_tests.sh
+
+# Direct Go test command
+go test -v
+```
+
+### Test Coverage
+```bash
+# Generate coverage report
+make test-coverage
+
+# View coverage in browser
+open coverage.html
+```
+
+### Test Organization
+- **Test files**: `*_test.go` files in root directory (following Go conventions)
+- **Test utilities**: `tests/` directory contains test scripts and documentation
+- **Test coverage**: History management, image clipboard, UI components, and integrations
+
 ## 🔧 Advanced Setup
 
 ### Manual Hotkey Setup
@@ -162,6 +192,34 @@ sudo systemctl --user enable clipboard-manager.service
   1. Ensure Go 1.21+ is installed
   2. Run `go mod tidy`
   3. Install CGO dependencies for Fyne GUI
+
+## 🛠️ Development
+
+### Build Commands
+```bash
+# Build the application
+make build
+
+# Clean build artifacts
+make clean
+
+# Install dependencies
+make deps
+
+# Run the application
+make run
+
+# Run in daemon mode
+make daemon
+```
+
+### Available Make Targets
+- `make build` - Build the clipboard manager binary
+- `make test` - Run all tests
+- `make test-coverage` - Run tests with coverage report
+- `make clean` - Clean build artifacts
+- `make install` - Install system-wide (requires sudo)
+- `make help` - Show all available targets
 
 ## 🤝 Contributing
 
