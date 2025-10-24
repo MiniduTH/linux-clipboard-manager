@@ -31,3 +31,9 @@ Thumbs.db
 
 # Local history storage
 *.json
+*.db
+*.sqlite
+*.sqlite3
+
+# Database files in user directories
+.local/share/clipboard-manager/

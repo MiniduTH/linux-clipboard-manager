@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -69,21 +68,14 @@ func addToHistory(text string) {
 		return
 	}
 	
-	// Remove duplicates from history
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Content == text && history[i].Type == ItemTypeText {
-			history = append(history[:i], history[i+1:]...)
-			break
-		}
+	// Save to database
+	if err := saveClipboardItem(newItem); err != nil {
+		fmt.Printf("Error saving text to database: %v\n", err)
+		return
 	}
 	
-	// Add to end
-	history = append(history, newItem)
-	
-	// Maintain max size
-	if len(history) > maxHistory {
-		history = history[len(history)-maxHistory:]
-	}
+	// Update in-memory history
+	refreshHistoryFromDB()
 }
 
 // addImageToHistory adds a new image item to clipboard history
@@ -146,50 +138,53 @@ func addImageToHistory(imageData []byte, format string) {
 		return
 	}
 	
-	// Remove duplicates from history
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Content == base64Data && history[i].Type == ItemTypeImage {
-			history = append(history[:i], history[i+1:]...)
-			break
-		}
+	// Save to database
+	if err := saveClipboardItem(newItem); err != nil {
+		fmt.Printf("Error saving image to database: %v\n", err)
+		return
 	}
 	
-	// Add to end
-	history = append(history, newItem)
-	
-	// Maintain max size
-	if len(history) > maxHistory {
-		history = history[len(history)-maxHistory:]
-	}
+	// Update in-memory history
+	refreshHistoryFromDB()
 }
 
 // Remove specific item from history by index
 func removeHistoryItem(index int) {
 	historyMu.Lock()
+	defer historyMu.Unlock()
 	
 	if index < 0 || index >= len(history) {
-		historyMu.Unlock()
 		fmt.Printf("Invalid index %d for history removal\n", index)
 		return
 	}
 	
-	// Remove item at index
-	history = append(history[:index], history[index+1:]...)
-	historyMu.Unlock()
+	// Get the item to remove
+	item := history[index]
 	
-	// Save updated history after releasing the lock to avoid deadlock
-	saveHistory()
+	// Remove from database
+	if err := deleteClipboardItem(item.Content, item.Type); err != nil {
+		fmt.Printf("Error removing item from database: %v\n", err)
+		return
+	}
+	
+	// Update in-memory history
+	refreshHistoryFromDB()
 	fmt.Printf("Removed history item at index %d\n", index)
 }
 
 // Clear all history with optional UI callback
 func clearHistory(onComplete ...func()) {
 	historyMu.Lock()
-	history = []ClipboardItem{}
-	historyMu.Unlock()
+	defer historyMu.Unlock()
 	
-	// Save history after releasing the lock to avoid deadlock
-	saveHistory()
+	// Clear from database
+	if err := clearClipboardHistory(); err != nil {
+		fmt.Printf("Error clearing history from database: %v\n", err)
+		return
+	}
+	
+	// Clear in-memory history
+	history = []ClipboardItem{}
 	fmt.Println("Clipboard history cleared.")
 	
 	// Call UI callback if provided
@@ -217,79 +212,29 @@ func getHistoryFile() string {
 }
 
 func saveHistory() {
-	historyMu.RLock()
-	historyCopy := make([]ClipboardItem, len(history))
-	copy(historyCopy, history)
-	historyMu.RUnlock()
-	
-	fpath := getHistoryFile()
-	f, err := os.Create(fpath)
-	if err != nil {
-		fmt.Printf("Save error: %v\n", err)
-		return
-	}
-	defer f.Close()
-	
-	encoder := json.NewEncoder(f)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(historyCopy); err != nil {
-		fmt.Printf("Encode error: %v\n", err)
-	}
+	// This function is now deprecated as we use SQLite database
+	// Keeping it for backward compatibility but it does nothing
+	// The database is automatically saved when items are added/removed
 }
 
 func loadHistory() {
-	fpath := getHistoryFile()
-	f, err := os.Open(fpath)
-	if err != nil {
-		// File doesn't exist yet, that's okay
-		return
-	}
-	defer f.Close()
-	
-	historyMu.Lock()
-	defer historyMu.Unlock()
-	
-	// Try to load new format first
-	var loadedHistory []ClipboardItem
-	if err := json.NewDecoder(f).Decode(&loadedHistory); err != nil {
-		// If new format fails, try legacy format ([]string)
-		f.Seek(0, 0) // Reset file position
-		var legacyHistory []string
-		if err := json.NewDecoder(f).Decode(&legacyHistory); err != nil {
-			// Reset to empty on error, don't print error for new installations
-			history = []ClipboardItem{}
-			return
-		}
-		
-		// Convert legacy format to new format
+	// Initialize database
+	if err := initDatabase(); err != nil {
+		fmt.Printf("Error initializing database: %v\n", err)
+		// Fallback to empty history
+		historyMu.Lock()
 		history = []ClipboardItem{}
-		for _, item := range legacyHistory {
-			if strings.TrimSpace(item) != "" && utf8.ValidString(item) {
-				history = append(history, ClipboardItem{
-					Type:      ItemTypeText,
-					Content:   item,
-					Timestamp: time.Now(),
-				})
-			}
-		}
+		historyMu.Unlock()
 		return
 	}
 	
-	// Validate loaded history (new format)
-	history = []ClipboardItem{}
-	for _, item := range loadedHistory {
-		// Validate text items
-		if item.Type == ItemTypeText {
-			if strings.TrimSpace(item.Content) != "" && utf8.ValidString(item.Content) {
-				history = append(history, item)
-			}
-		} else if item.Type == ItemTypeImage {
-			// Validate image items - check if base64 content is valid
-			if _, err := base64.StdEncoding.DecodeString(item.Content); err == nil {
-				history = append(history, item)
-			}
-		}
+	// Try to migrate from JSON if it exists
+	if err := migrateFromJSON(); err != nil {
+		fmt.Printf("Warning: failed to migrate from JSON: %v\n", err)
 	}
+	
+	// Load history from database
+	refreshHistoryFromDB()
 }
 
 // Get history length safely
@@ -321,4 +266,15 @@ func restoreImageToClipboard(base64Data string, format string) error {
 	
 	// Use the system clipboard restoration function
 	return restoreImageToSystemClipboard(imageData, format)
+}
+// refreshHistoryFromDB loads the current history from database into memory
+func refreshHistoryFromDB() {
+	loadedHistory, err := loadClipboardHistory()
+	if err != nil {
+		fmt.Printf("Error loading history from database: %v\n", err)
+		return
+	}
+	
+	// Update in-memory history (lock should already be held by caller)
+	history = loadedHistory
 }

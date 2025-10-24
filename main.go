@@ -84,8 +84,8 @@ func main() {
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		go func() {
 			<-c
-			fmt.Println("\nSaving clipboard history...")
-			saveHistory()
+			fmt.Println("\nClosing database...")
+			closeDatabase()
 			os.Exit(0)
 		}()
 
@@ -103,8 +103,8 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println("\nSaving clipboard history...")
-		saveHistory()
+		fmt.Println("\nClosing database...")
+		closeDatabase()
 		os.Exit(0)
 	}()
 
@@ -136,14 +136,6 @@ func checkEnvironment() bool {
 func watchClipboard() {
 	lastText := ""
 	var lastImageData []byte
-	saveTimer := time.NewTicker(10 * time.Second) // save every 10 seconds
-	defer saveTimer.Stop()
-	
-	go func() {
-		for range saveTimer.C {
-			saveHistory()
-		}
-	}()
 	
 	errorCount := 0
 	maxErrors := 5

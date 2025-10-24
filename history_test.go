@@ -9,13 +9,18 @@ import (
 )
 
 func TestRemoveHistoryItem(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Setup: Clear history and add test items
-	history = []ClipboardItem{
+	testItems := []ClipboardItem{
 		{Type: ItemTypeText, Content: "item1", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item2", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item3", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item4", Timestamp: time.Now()},
 	}
+	addTestItems(t, testItems)
 	
 	tests := []struct {
 		name          string
@@ -46,22 +51,24 @@ func TestRemoveHistoryItem(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset history for each test
-			history = []ClipboardItem{
-				{Type: ItemTypeText, Content: "item1", Timestamp: time.Now()},
-				{Type: ItemTypeText, Content: "item2", Timestamp: time.Now()},
-				{Type: ItemTypeText, Content: "item3", Timestamp: time.Now()},
-				{Type: ItemTypeText, Content: "item4", Timestamp: time.Now()},
-			}
+			clearTestHistory(t)
+			addTestItems(t, testItems)
 			
 			removeHistoryItem(tt.index)
 			
-			if len(history) != tt.expectedLen {
-				t.Errorf("Expected history length %d, got %d", tt.expectedLen, len(history))
+			actualLen := getTestHistoryLength()
+			if actualLen != tt.expectedLen {
+				t.Errorf("Expected history length %d, got %d", tt.expectedLen, actualLen)
 			}
 			
 			for i, expected := range tt.expectedItems {
-				if i >= len(history) || history[i].Content != expected {
-					t.Errorf("Expected item at index %d to be %s, got %s", i, expected, history[i].Content)
+				if i >= actualLen {
+					t.Errorf("Expected item at index %d, but history is too short", i)
+					continue
+				}
+				item := getTestHistoryItem(i)
+				if item.Content != expected {
+					t.Errorf("Expected item at index %d to be %s, got %s", i, expected, item.Content)
 				}
 			}
 		})
@@ -69,13 +76,18 @@ func TestRemoveHistoryItem(t *testing.T) {
 }
 
 func TestRemoveHistoryItemInvalidIndex(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Setup: Clear history and add test items
-	history = []ClipboardItem{
+	testItems := []ClipboardItem{
 		{Type: ItemTypeText, Content: "item1", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item2", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item3", Timestamp: time.Now()},
 	}
-	originalLen := len(history)
+	addTestItems(t, testItems)
+	originalLen := getTestHistoryLength()
 	
 	tests := []struct {
 		name  string
@@ -98,44 +110,53 @@ func TestRemoveHistoryItemInvalidIndex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset history for each test
-			history = []ClipboardItem{
-				{Type: ItemTypeText, Content: "item1", Timestamp: time.Now()},
-				{Type: ItemTypeText, Content: "item2", Timestamp: time.Now()},
-				{Type: ItemTypeText, Content: "item3", Timestamp: time.Now()},
-			}
+			clearTestHistory(t)
+			addTestItems(t, testItems)
 			
 			removeHistoryItem(tt.index)
 			
 			// History should remain unchanged
-			if len(history) != originalLen {
-				t.Errorf("Expected history length to remain %d, got %d", originalLen, len(history))
+			actualLen := getTestHistoryLength()
+			if actualLen != originalLen {
+				t.Errorf("Expected history length to remain %d, got %d", originalLen, actualLen)
 			}
 		})
 	}
 }
 
 func TestClearHistory(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Setup: Add test items
-	history = []ClipboardItem{
+	testItems := []ClipboardItem{
 		{Type: ItemTypeText, Content: "item1", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item2", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item3", Timestamp: time.Now()},
 	}
+	addTestItems(t, testItems)
 	
 	clearHistory()
 	
-	if len(history) != 0 {
-		t.Errorf("Expected history to be empty after clear, got length %d", len(history))
+	actualLen := getTestHistoryLength()
+	if actualLen != 0 {
+		t.Errorf("Expected history to be empty after clear, got length %d", actualLen)
 	}
 }
 
 func TestClearHistoryWithCallback(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Setup: Add test items
-	history = []ClipboardItem{
+	testItems := []ClipboardItem{
 		{Type: ItemTypeText, Content: "item1", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item2", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item3", Timestamp: time.Now()},
 	}
+	addTestItems(t, testItems)
 	
 	callbackCalled := false
 	callback := func() {
@@ -144,8 +165,9 @@ func TestClearHistoryWithCallback(t *testing.T) {
 	
 	clearHistory(callback)
 	
-	if len(history) != 0 {
-		t.Errorf("Expected history to be empty after clear, got length %d", len(history))
+	actualLen := getTestHistoryLength()
+	if actualLen != 0 {
+		t.Errorf("Expected history to be empty after clear, got length %d", actualLen)
 	}
 	
 	if !callbackCalled {
@@ -154,12 +176,17 @@ func TestClearHistoryWithCallback(t *testing.T) {
 }
 
 func TestClearHistoryWithMultipleCallbacks(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Setup: Add test items
-	history = []ClipboardItem{
+	testItems := []ClipboardItem{
 		{Type: ItemTypeText, Content: "item1", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item2", Timestamp: time.Now()},
 		{Type: ItemTypeText, Content: "item3", Timestamp: time.Now()},
 	}
+	addTestItems(t, testItems)
 	
 	callback1Called := false
 	callback2Called := false
@@ -174,8 +201,9 @@ func TestClearHistoryWithMultipleCallbacks(t *testing.T) {
 	
 	clearHistory(callback1, callback2)
 	
-	if len(history) != 0 {
-		t.Errorf("Expected history to be empty after clear, got length %d", len(history))
+	actualLen := getTestHistoryLength()
+	if actualLen != 0 {
+		t.Errorf("Expected history to be empty after clear, got length %d", actualLen)
 	}
 	
 	if !callback1Called {
@@ -188,17 +216,20 @@ func TestClearHistoryWithMultipleCallbacks(t *testing.T) {
 }
 
 func TestConcurrentAccess(t *testing.T) {
-	// Setup: Clear history
-	history = []ClipboardItem{}
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
 	
-	// Add initial items
+	// Setup: Clear history and add initial items
+	var testItems []ClipboardItem
 	for i := 0; i < 10; i++ {
-		history = append(history, ClipboardItem{
+		testItems = append(testItems, ClipboardItem{
 			Type:      ItemTypeText,
 			Content:   fmt.Sprintf("item%d", i),
 			Timestamp: time.Now(),
 		})
 	}
+	addTestItems(t, testItems)
 	
 	var wg sync.WaitGroup
 	numGoroutines := 5
@@ -216,22 +247,27 @@ func TestConcurrentAccess(t *testing.T) {
 	wg.Wait()
 	
 	// History should still be valid (no panics or corruption)
-	currentLen := getHistoryLength()
+	currentLen := getTestHistoryLength()
 	if currentLen < 0 || currentLen > 10 {
 		t.Errorf("History length after concurrent deletion is invalid: %d", currentLen)
 	}
 }
 
 func TestConcurrentClearAndRemove(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Setup: Add test items
-	history = []ClipboardItem{}
+	var testItems []ClipboardItem
 	for i := 0; i < 20; i++ {
-		history = append(history, ClipboardItem{
+		testItems = append(testItems, ClipboardItem{
 			Type:      ItemTypeText,
 			Content:   fmt.Sprintf("item%d", i),
 			Timestamp: time.Now(),
 		})
 	}
+	addTestItems(t, testItems)
 	
 	var wg sync.WaitGroup
 	
@@ -257,7 +293,7 @@ func TestConcurrentClearAndRemove(t *testing.T) {
 	wg.Wait()
 	
 	// Final state should be consistent (empty due to clear)
-	finalLen := getHistoryLength()
+	finalLen := getTestHistoryLength()
 	if finalLen != 0 {
 		t.Errorf("Expected final history length to be 0, got %d", finalLen)
 	}

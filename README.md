@@ -8,7 +8,7 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 - ⌨️ **Global hotkey support (Super+Z)** for instant access from anywhere
 - 🖥️ **GUI interface** using Fyne with automatic terminal fallback
 - 🔧 **System tray integration** with right-click menu
-- 💾 **Persistent history storage** (up to 50 items)
+- 💾 **SQLite database storage** with automatic JSON migration (up to 50 items)
 - 🔄 **Intelligent duplicate detection** and removal
 - 🧹 **Advanced history management** (clear, limit, validation)
 - 🐧 **Full Linux support** (X11 and Wayland)
@@ -100,11 +100,18 @@ Shows all available commands and options.
 
 ## ⚙️ Configuration
 
-- **History location**: `~/.local/share/clipboard-manager/history.json`
+- **History storage**: `~/.local/share/clipboard-manager/history.db` (SQLite database)
 - **Maximum history items**: 50 (configurable in code)
-- **Auto-save interval**: 10 seconds
+- **Database features**: Automatic migration from JSON, duplicate detection, efficient queries
 - **Desktop entries**: `~/.local/share/applications/`
 - **Autostart**: `~/.config/autostart/` (optional)
+
+### Database Migration
+
+The application automatically migrates existing JSON history files to SQLite database format:
+- **Old format**: `~/.local/share/clipboard-manager/history.json`
+- **New format**: `~/.local/share/clipboard-manager/history.db`
+- **Backup**: Original JSON file is backed up as `history.json.backup`
 
 ## 🧪 Testing
 

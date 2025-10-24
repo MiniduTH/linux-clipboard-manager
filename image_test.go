@@ -32,8 +32,12 @@ func createTestImage() ([]byte, error) {
 }
 
 func TestAddImageToHistory(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Clear history for test
-	history = []ClipboardItem{}
+	clearTestHistory(t)
 	
 	// Create test image
 	imageData, err := createTestImage()
@@ -45,11 +49,12 @@ func TestAddImageToHistory(t *testing.T) {
 	addImageToHistory(imageData, "png")
 	
 	// Verify image was added
-	if len(history) != 1 {
-		t.Fatalf("Expected 1 item in history, got %d", len(history))
+	actualLen := getTestHistoryLength()
+	if actualLen != 1 {
+		t.Fatalf("Expected 1 item in history, got %d", actualLen)
 	}
 	
-	item := history[0]
+	item := getTestHistoryItem(0)
 	if item.Type != ItemTypeImage {
 		t.Errorf("Expected item type %s, got %s", ItemTypeImage, item.Type)
 	}
@@ -77,8 +82,12 @@ func TestAddImageToHistory(t *testing.T) {
 }
 
 func TestImageDuplicateDetection(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Clear history for test
-	history = []ClipboardItem{}
+	clearTestHistory(t)
 	
 	// Create test image
 	imageData, err := createTestImage()
@@ -91,14 +100,19 @@ func TestImageDuplicateDetection(t *testing.T) {
 	addImageToHistory(imageData, "png")
 	
 	// Should only have one item (duplicate detection)
-	if len(history) != 1 {
-		t.Errorf("Expected 1 item in history (duplicate detection), got %d", len(history))
+	actualLen := getTestHistoryLength()
+	if actualLen != 1 {
+		t.Errorf("Expected 1 item in history (duplicate detection), got %d", actualLen)
 	}
 }
 
 func TestMixedTextAndImageHistory(t *testing.T) {
+	// Setup test database
+	setupTestDB(t)
+	defer teardownTestDB(t)
+	
 	// Clear history for test
-	history = []ClipboardItem{}
+	clearTestHistory(t)
 	
 	// Add text item
 	addToHistory("Test text content")
@@ -114,20 +128,24 @@ func TestMixedTextAndImageHistory(t *testing.T) {
 	addToHistory("Another text item")
 	
 	// Verify mixed history
-	if len(history) != 3 {
-		t.Fatalf("Expected 3 items in history, got %d", len(history))
+	actualLen := getTestHistoryLength()
+	if actualLen != 3 {
+		t.Fatalf("Expected 3 items in history, got %d", actualLen)
 	}
 	
 	// Check order and types
-	if history[0].Type != ItemTypeText || history[0].Content != "Test text content" {
+	item0 := getTestHistoryItem(0)
+	if item0.Type != ItemTypeText || item0.Content != "Test text content" {
 		t.Error("First item should be text")
 	}
 	
-	if history[1].Type != ItemTypeImage {
+	item1 := getTestHistoryItem(1)
+	if item1.Type != ItemTypeImage {
 		t.Error("Second item should be image")
 	}
 	
-	if history[2].Type != ItemTypeText || history[2].Content != "Another text item" {
+	item2 := getTestHistoryItem(2)
+	if item2.Type != ItemTypeText || item2.Content != "Another text item" {
 		t.Error("Third item should be text")
 	}
 }
