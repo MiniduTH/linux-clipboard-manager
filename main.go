@@ -55,6 +55,9 @@ func main() {
 		fmt.Println("  ./clipboard-manager capture          - Manually capture current clipboard")
 		fmt.Println("  ./clipboard-manager status       - Show daemon status")
 		fmt.Println("  ./clipboard-manager stop         - Stop daemon")
+		fmt.Println("  ./clipboard-manager startup-status  - Show startup application status")
+		fmt.Println("  ./clipboard-manager startup-enable  - Enable startup application")
+		fmt.Println("  ./clipboard-manager startup-disable - Disable startup application")
 		fmt.Println("  ./clipboard-manager help         - Show this help")
 		fmt.Println()
 		fmt.Println("System Integration:")
@@ -196,6 +199,21 @@ func main() {
 		} else {
 			fmt.Println("No meaningful text found in clipboard")
 		}
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "startup-status" {
+		showStartupStatus()
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "startup-enable" {
+		enableStartup()
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "startup-disable" {
+		disableStartup()
 		return
 	}
 
@@ -512,4 +530,104 @@ func watchClipboardMinimal() {
 			}
 		}
 	}
+}
+
+// showStartupStatus shows the current startup application status
+func showStartupStatus() {
+	autostartFile := os.ExpandEnv("$HOME/.config/autostart/clipboard-manager.desktop")
+	
+	if _, err := os.Stat(autostartFile); os.IsNotExist(err) {
+		fmt.Println("🚀 Startup Application Status: DISABLED")
+		fmt.Println("   • Autostart file does not exist")
+		fmt.Printf("   • Location: %s\n", autostartFile)
+		fmt.Println("   • Run 'clipboard-manager startup-enable' to enable")
+		return
+	}
+	
+	// Check if the file exists and read its content
+	content, err := os.ReadFile(autostartFile)
+	if err != nil {
+		fmt.Printf("❌ Error reading autostart file: %v\n", err)
+		return
+	}
+	
+	// Check if it's disabled in the file content
+	contentStr := string(content)
+	if strings.Contains(contentStr, "Hidden=true") || strings.Contains(contentStr, "X-GNOME-Autostart-enabled=false") {
+		fmt.Println("🚀 Startup Application Status: DISABLED")
+		fmt.Println("   • Autostart file exists but is disabled")
+	} else {
+		fmt.Println("🚀 Startup Application Status: ENABLED")
+		fmt.Println("   • Will start automatically on login")
+	}
+	
+	fmt.Printf("   • Location: %s\n", autostartFile)
+	fmt.Println("   • Visible in System Settings > Startup Applications")
+	fmt.Println("   • Run 'clipboard-manager startup-disable' to disable")
+	fmt.Println("   • Run 'clipboard-manager startup-enable' to enable")
+}
+
+// enableStartup enables the startup application
+func enableStartup() {
+	autostartDir := os.ExpandEnv("$HOME/.config/autostart")
+	autostartFile := autostartDir + "/clipboard-manager.desktop"
+	
+	// Create autostart directory if it doesn't exist
+	if err := os.MkdirAll(autostartDir, 0755); err != nil {
+		fmt.Printf("❌ Error creating autostart directory: %v\n", err)
+		return
+	}
+	
+	// Create the enhanced autostart file
+	content := `[Desktop Entry]
+Name=Clipboard Manager
+GenericName=Clipboard History Manager
+Comment=Clipboard history manager with Ctrl+Shift+V hotkey
+Exec=/usr/local/bin/clipboard-manager daemon
+Icon=edit-copy
+Terminal=false
+Type=Application
+Categories=Utility;System;Accessibility;
+Keywords=clipboard;history;copy;paste;hotkey;
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-after=panel
+X-MATE-Autostart-enabled=true
+X-XFCE-Autostart-enabled=true
+Hidden=false
+NoDisplay=false
+StartupNotify=false
+X-GNOME-Autostart-Delay=3
+X-KDE-StartupNotify=false
+OnlyShowIn=GNOME;KDE;XFCE;MATE;Unity;Cinnamon;Pantheon;LXQt;LXDE;
+`
+	
+	if err := os.WriteFile(autostartFile, []byte(content), 0644); err != nil {
+		fmt.Printf("❌ Error creating autostart file: %v\n", err)
+		return
+	}
+	
+	fmt.Println("✅ Startup application ENABLED")
+	fmt.Printf("   • Created: %s\n", autostartFile)
+	fmt.Println("   • Clipboard Manager will start automatically on login")
+	fmt.Println("   • Visible in System Settings > Startup Applications")
+}
+
+// disableStartup disables the startup application
+func disableStartup() {
+	autostartFile := os.ExpandEnv("$HOME/.config/autostart/clipboard-manager.desktop")
+	
+	if _, err := os.Stat(autostartFile); os.IsNotExist(err) {
+		fmt.Println("ℹ️  Startup application is already disabled (file does not exist)")
+		return
+	}
+	
+	if err := os.Remove(autostartFile); err != nil {
+		fmt.Printf("❌ Error removing autostart file: %v\n", err)
+		return
+	}
+	
+	fmt.Println("✅ Startup application DISABLED")
+	fmt.Printf("   • Removed: %s\n", autostartFile)
+	fmt.Println("   • Clipboard Manager will not start automatically on login")
+	fmt.Println("   • Run 'clipboard-manager startup-enable' to re-enable")
 }

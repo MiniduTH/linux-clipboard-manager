@@ -1,13 +1,20 @@
 [Desktop Entry]
 Name=Clipboard Manager
-Comment=Clipboard history manager for Linux
+GenericName=Clipboard History Manager
+Comment=Clipboard history manager with Ctrl+Shift+V hotkey
 Exec=/usr/local/bin/clipboard-manager daemon
 Icon=edit-copy
 Terminal=false
 Type=Application
-Categories=Utility;System;
+Categories=Utility;System;Accessibility;
+Keywords=clipboard;history;copy;paste;hotkey;
 X-GNOME-Autostart-enabled=true
+X-KDE-autostart-after=panel
+X-MATE-Autostart-enabled=true
+X-XFCE-Autostart-enabled=true
 Hidden=false
 NoDisplay=false
 StartupNotify=false
 X-GNOME-Autostart-Delay=3
+X-KDE-StartupNotify=false
+OnlyShowIn=GNOME;KDE;XFCE;MATE;Unity;Cinnamon;Pantheon;LXQt;LXDE;

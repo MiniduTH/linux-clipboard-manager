@@ -124,17 +124,24 @@ release: clean
 	@echo 'cat > ~/.config/autostart/clipboard-manager.desktop << EOF' >> build/release/install.sh
 	@echo '[Desktop Entry]' >> build/release/install.sh
 	@echo 'Name=Clipboard Manager' >> build/release/install.sh
-	@echo 'Comment=Clipboard history manager for Linux' >> build/release/install.sh
+	@echo 'GenericName=Clipboard History Manager' >> build/release/install.sh
+	@echo 'Comment=Clipboard history manager with Ctrl+Shift+V hotkey' >> build/release/install.sh
 	@echo 'Exec=/usr/local/bin/clipboard-manager daemon' >> build/release/install.sh
 	@echo 'Icon=edit-copy' >> build/release/install.sh
 	@echo 'Terminal=false' >> build/release/install.sh
 	@echo 'Type=Application' >> build/release/install.sh
-	@echo 'Categories=Utility;System;' >> build/release/install.sh
+	@echo 'Categories=Utility;System;Accessibility;' >> build/release/install.sh
+	@echo 'Keywords=clipboard;history;copy;paste;hotkey;' >> build/release/install.sh
 	@echo 'X-GNOME-Autostart-enabled=true' >> build/release/install.sh
+	@echo 'X-KDE-autostart-after=panel' >> build/release/install.sh
+	@echo 'X-MATE-Autostart-enabled=true' >> build/release/install.sh
+	@echo 'X-XFCE-Autostart-enabled=true' >> build/release/install.sh
 	@echo 'Hidden=false' >> build/release/install.sh
 	@echo 'NoDisplay=false' >> build/release/install.sh
 	@echo 'StartupNotify=false' >> build/release/install.sh
 	@echo 'X-GNOME-Autostart-Delay=3' >> build/release/install.sh
+	@echo 'X-KDE-StartupNotify=false' >> build/release/install.sh
+	@echo 'OnlyShowIn=GNOME;KDE;XFCE;MATE;Unity;Cinnamon;Pantheon;LXQt;LXDE;' >> build/release/install.sh
 	@echo 'EOF' >> build/release/install.sh
 	@echo '' >> build/release/install.sh
 	@echo 'echo "✅ Installation completed!"' >> build/release/install.sh
@@ -142,6 +149,12 @@ release: clean
 	@echo 'echo "   • Desktop entry: ~/.local/share/applications/clipboard-manager.desktop"' >> build/release/install.sh
 	@echo 'echo "   • Autostart entry: ~/.config/autostart/clipboard-manager.desktop"' >> build/release/install.sh
 	@echo 'echo "   • Hotkey: Ctrl+Shift+V (configured automatically)"' >> build/release/install.sh
+	@echo 'echo ""' >> build/release/install.sh
+	@echo 'echo "🚀 Startup Application:"' >> build/release/install.sh
+	@echo 'echo "   • Added to system startup applications list"' >> build/release/install.sh
+	@echo 'echo "   • Will start automatically on login"' >> build/release/install.sh
+	@echo 'echo "   • Visible in your desktop'\''s startup applications manager"' >> build/release/install.sh
+	@echo 'echo "   • Can be managed through System Settings > Startup Applications"' >> build/release/install.sh
 	@echo 'echo ""' >> build/release/install.sh
 	@echo 'echo "Usage:"' >> build/release/install.sh
 	@echo 'echo "   • Press Ctrl+Shift+V from anywhere to open clipboard history"' >> build/release/install.sh
@@ -272,22 +285,35 @@ install: build
 	@mkdir -p ~/.config/autostart
 	@echo "[Desktop Entry]" > ~/.config/autostart/clipboard-manager.desktop
 	@echo "Name=Clipboard Manager" >> ~/.config/autostart/clipboard-manager.desktop
-	@echo "Comment=Clipboard history manager for Linux" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "GenericName=Clipboard History Manager" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "Comment=Clipboard history manager with Ctrl+Shift+V hotkey" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "Exec=/usr/local/bin/clipboard-manager daemon" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "Icon=edit-copy" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "Terminal=false" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "Type=Application" >> ~/.config/autostart/clipboard-manager.desktop
-	@echo "Categories=Utility;System;" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "Categories=Utility;System;Accessibility;" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "Keywords=clipboard;history;copy;paste;hotkey;" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "X-GNOME-Autostart-enabled=true" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "X-KDE-autostart-after=panel" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "X-MATE-Autostart-enabled=true" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "X-XFCE-Autostart-enabled=true" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "Hidden=false" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "NoDisplay=false" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "StartupNotify=false" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "X-GNOME-Autostart-Delay=3" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "X-KDE-StartupNotify=false" >> ~/.config/autostart/clipboard-manager.desktop
+	@echo "OnlyShowIn=GNOME;KDE;XFCE;MATE;Unity;Cinnamon;Pantheon;LXQt;LXDE;" >> ~/.config/autostart/clipboard-manager.desktop
 	@echo "✅ Installation completed!"
 	@echo "   • Binary: /usr/local/bin/clipboard-manager"
 	@echo "   • Desktop entry: ~/.local/share/applications/clipboard-manager.desktop"
 	@echo "   • Autostart entry: ~/.config/autostart/clipboard-manager.desktop"
 	@echo "   • Hotkey: Ctrl+Shift+V (configured automatically)"
+	@echo ""
+	@echo "🚀 Startup Application:"
+	@echo "   • Added to system startup applications list"
+	@echo "   • Will start automatically on login"
+	@echo "   • Visible in your desktop's startup applications manager"
+	@echo "   • Can be managed through System Settings > Startup Applications"
 	@echo ""
 	@echo "Usage:"
 	@echo "   • Press Ctrl+Shift+V from anywhere to open clipboard history"
