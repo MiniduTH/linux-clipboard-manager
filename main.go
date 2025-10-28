@@ -332,7 +332,7 @@ func watchClipboard() {
 			time.Sleep(3 * time.Second)
 		} else {
 			// Normal polling - much less aggressive
-			time.Sleep(2 * time.Second)
+			time.Sleep(6 * time.Second)
 		}
 	}
 }
