@@ -30,7 +30,6 @@ func setupSystemTray() {
 				}
 			}),
 			fyne.NewMenuItem("Quit", func() {
-				saveHistory()
 				a.Quit()
 			}),
 		)

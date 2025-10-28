@@ -157,11 +157,8 @@ func TestRestoreImageToClipboard(t *testing.T) {
 		t.Fatalf("Failed to create test image: %v", err)
 	}
 	
-	// Encode as base64
-	base64Data := base64.StdEncoding.EncodeToString(imageData)
-	
-	// Test restoration (this will likely fail in test environment without clipboard utilities)
-	err = restoreImageToClipboard(base64Data, "png")
+	// Test restoration using the current function (this will likely fail in test environment without clipboard utilities)
+	err = restoreImageToSystemClipboard(imageData, "png")
 	
 	// We expect this to fail in test environment, but it should not panic
 	// The function should handle the error gracefully

@@ -9,7 +9,6 @@ The actual Go test files (`*_test.go`) are located in the root directory alongsi
 ## Test Scripts
 
 - `run_tests.sh` - Comprehensive test runner script
-- `test.sh` - Legacy test script (moved here for organization)
 
 ## Test Binaries
 

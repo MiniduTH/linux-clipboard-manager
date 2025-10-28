@@ -213,11 +213,7 @@ func getHistoryFile() string {
 	return filepath.Join(dir, "history.json")
 }
 
-func saveHistory() {
-	// This function is now deprecated as we use SQLite database
-	// Keeping it for backward compatibility but it does nothing
-	// The database is automatically saved when items are added/removed
-}
+
 
 func loadHistory() {
 	// Initialize database
@@ -256,19 +252,7 @@ func getHistoryCopy() []ClipboardItem {
 	return historyCopy
 }
 
-// restoreImageToClipboard restores an image from base64 storage to clipboard
-// This function is kept for backward compatibility but the actual restoration
-// is now handled by restoreImageToSystemClipboard in image_clipboard.go
-func restoreImageToClipboard(base64Data string, format string) error {
-	// Decode base64 data
-	imageData, err := base64.StdEncoding.DecodeString(base64Data)
-	if err != nil {
-		return fmt.Errorf("failed to decode base64 image: %v", err)
-	}
-	
-	// Use the system clipboard restoration function
-	return restoreImageToSystemClipboard(imageData, format)
-}
+
 // refreshHistoryFromDB loads the current history from database into memory
 func refreshHistoryFromDB() {
 	loadedHistory, err := loadClipboardHistory()
