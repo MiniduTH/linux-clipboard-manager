@@ -112,58 +112,12 @@ func refreshUI(w fyne.Window) {
 	scrollContainer.Direction = container.ScrollVerticalOnly
 
 	// Create buttons with improved styling
-	var clearBtn *widget.Button
-	clearBtn = widget.NewButton("Clear History", func() {
-		// Show confirmation dialog before clearing
-		var confirmDialog *widget.PopUp
-		
-		cancelBtn := widget.NewButton("Cancel", func() {
-			confirmDialog.Hide()
-		})
-		
-		clearAllBtn := widget.NewButton("Clear All", func() {
-			confirmDialog.Hide()
-			
-			// Disable the clear button and show loading state
-			clearBtn.SetText("Clearing...")
-			clearBtn.Disable()
-			
-			// Clear history with proper error handling
-			err := clearHistory(func() {
-				// UI callback after clearing history - refresh to empty state
-				refreshUI(w)
-			})
-			
-			// If clearing failed, re-enable the button
-			if err != nil {
-				clearBtn.SetText("Clear History")
-				clearBtn.Enable()
-			}
-		})
-		clearAllBtn.Importance = widget.DangerImportance
-		
-		confirmDialog = widget.NewModalPopUp(
-			container.NewVBox(
-				widget.NewLabel("Clear all clipboard history?"),
-				widget.NewLabel("This action cannot be undone."),
-				widget.NewSeparator(),
-				container.NewHBox(
-					cancelBtn,
-					clearAllBtn,
-				),
-			),
-			w.Canvas(),
-		)
-		confirmDialog.Show()
-	})
-	clearBtn.Importance = widget.MediumImportance
-	
 	closeBtn := widget.NewButton("Close", func() {
 		w.Close()
 	})
 	closeBtn.Importance = widget.HighImportance
 
-	buttonContainer := container.NewHBox(clearBtn, closeBtn)
+	buttonContainer := container.NewHBox(closeBtn)
 	headerLabel := widget.NewLabel(fmt.Sprintf("Clipboard History (%d items) - Click to copy, X to delete", historyLen))
 	headerLabel.Wrapping = fyne.TextWrapWord
 
