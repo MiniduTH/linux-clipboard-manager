@@ -345,32 +345,6 @@ uninstall-complete: uninstall
 	@echo "✅ Complete uninstall finished!"
 	@echo "All clipboard manager files and data have been removed."
 
-# Create release with smart installer
-release-smart: clean
-	@echo "📦 Creating smart release with dependency management..."
-	@mkdir -p build/release
-	
-	@echo "Building optimized binary..."
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/release/clipboard-manager-linux-amd64
-	
-	@echo "Creating smart installation script..."
-	@cp scripts/install-template.sh build/release/install.sh
-	@chmod +x build/release/install.sh
-	
-	@echo "Copying documentation..."
-	@cp README.md build/release/
-	@cp INSTALL.md build/release/
-	@cp LICENSE build/release/ 2>/dev/null || echo "LICENSE file not found, skipping..."
-	
-	@echo "✅ Smart release created in build/release/"
-	@echo "Features:"
-	@echo "   • Automatic dependency detection and installation"
-	@echo "   • Multi-distribution support (Ubuntu, Fedora, Arch, etc.)"
-	@echo "   • Environment diagnostics"
-	@echo "   • Comprehensive error handling"
-	@echo "   • Professional installation experience"
-	@ls -la build/release/
-
 # Help
 help:
 	@echo "Clipboard Manager - Available targets:"

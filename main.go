@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -15,9 +14,34 @@ import (
 )
 
 func main() {
-	// Check if we're in a proper environment
-	if !checkEnvironment() {
-		log.Fatal("This application requires a graphical environment (X11 or Wayland) and clipboard utilities")
+	// Check if we're in a proper environment (skip for certain commands)
+	if len(os.Args) > 1 {
+		mode := os.Args[1]
+		// These commands don't require full graphical environment
+		skipEnvCheck := mode == "help" || mode == "diagnose" || mode == "status" || 
+						mode == "stop" || mode == "startup-status" || 
+						mode == "startup-enable" || mode == "startup-disable"
+		
+		if !skipEnvCheck && !checkEnvironment() {
+			fmt.Println("❌ Environment Check Failed")
+			fmt.Println()
+			diagnoseEnvironment()
+			fmt.Println()
+			fmt.Println("💡 Try 'clipboard-manager help' for available options")
+			fmt.Println("   Or 'clipboard-manager diagnose' for detailed diagnosis")
+			os.Exit(1)
+		}
+	} else {
+		// Default mode requires full environment
+		if !checkEnvironment() {
+			fmt.Println("❌ Environment Check Failed")
+			fmt.Println()
+			diagnoseEnvironment()
+			fmt.Println()
+			fmt.Println("💡 Try 'clipboard-manager help' for available options")
+			fmt.Println("   Or 'clipboard-manager diagnose' for detailed diagnosis")
+			os.Exit(1)
+		}
 	}
 
 	loadHistory() // load previous data
@@ -58,6 +82,7 @@ func main() {
 		fmt.Println("  ./clipboard-manager startup-status  - Show startup application status")
 		fmt.Println("  ./clipboard-manager startup-enable  - Enable startup application")
 		fmt.Println("  ./clipboard-manager startup-disable - Disable startup application")
+		fmt.Println("  ./clipboard-manager diagnose     - Check environment and requirements")
 		fmt.Println("  ./clipboard-manager help         - Show this help")
 		fmt.Println()
 		fmt.Println("System Integration:")
@@ -66,6 +91,11 @@ func main() {
 		fmt.Println("  Use 'daemon-only' to run without hotkeys or GUI")
 		fmt.Println("  The daemon runs in background to monitor clipboard")
 		fmt.Println("  Use 'daemon-minimal' or 'daemon-passive' if you experience clicking/menu issues")
+		fmt.Println()
+		fmt.Println("Troubleshooting:")
+		fmt.Println("  If you get environment errors, run 'clipboard-manager diagnose'")
+		fmt.Println("  For headless/server environments, use 'daemon-passive' mode")
+		fmt.Println("  For SSH/remote sessions, ensure X11 forwarding is enabled")
 		return
 	}
 
@@ -217,6 +247,13 @@ func main() {
 		return
 	}
 
+	if len(os.Args) > 1 && os.Args[1] == "diagnose" {
+		fmt.Println("🔍 Clipboard Manager Environment Diagnosis")
+		fmt.Println()
+		diagnoseEnvironment()
+		return
+	}
+
 	// Default mode: Start with system integration and hotkeys
 	// Check if daemon is already running
 	if isDaemonRunning() {
@@ -247,8 +284,17 @@ func main() {
 
 // Check if we have the necessary environment and tools
 func checkEnvironment() bool {
+	// For daemon-only modes, we can be more lenient
+	if len(os.Args) > 1 {
+		mode := os.Args[1]
+		if mode == "daemon-passive" || mode == "help" || mode == "status" || mode == "stop" {
+			return true // These modes don't need full GUI environment
+		}
+	}
+
 	// Check for display server
-	if os.Getenv("DISPLAY") == "" && os.Getenv("WAYLAND_DISPLAY") == "" {
+	hasDisplay := os.Getenv("DISPLAY") != "" || os.Getenv("WAYLAND_DISPLAY") != ""
+	if !hasDisplay {
 		return false
 	}
 
@@ -263,6 +309,76 @@ func checkEnvironment() bool {
 	// If no external tools, try the Go clipboard library
 	_, err := clipboard.ReadAll()
 	return err == nil
+}
+
+// Provide detailed diagnostics about the environment
+func diagnoseEnvironment() {
+	fmt.Println("🔍 Environment Diagnosis:")
+	fmt.Println()
+
+	// Check display server
+	display := os.Getenv("DISPLAY")
+	waylandDisplay := os.Getenv("WAYLAND_DISPLAY")
+	
+	if display != "" {
+		fmt.Printf("✓ X11 Display: %s\n", display)
+	} else if waylandDisplay != "" {
+		fmt.Printf("✓ Wayland Display: %s\n", waylandDisplay)
+	} else {
+		fmt.Println("❌ No graphical display detected")
+		fmt.Println("   • DISPLAY environment variable not set")
+		fmt.Println("   • WAYLAND_DISPLAY environment variable not set")
+		fmt.Println()
+		fmt.Println("💡 Solutions:")
+		fmt.Println("   • Run this on a desktop environment (GNOME, KDE, XFCE, etc.)")
+		fmt.Println("   • If using SSH, try: ssh -X username@hostname")
+		fmt.Println("   • If using remote desktop, ensure X11 forwarding is enabled")
+		fmt.Println("   • For headless servers, use 'clipboard-manager daemon-passive' mode")
+		fmt.Println()
+	}
+
+	// Check clipboard utilities
+	fmt.Println("📋 Clipboard Utilities:")
+	tools := []string{"xclip", "xsel", "wl-clipboard"}
+	foundAny := false
+	
+	for _, tool := range tools {
+		if path, err := exec.LookPath(tool); err == nil {
+			fmt.Printf("✓ %s: %s\n", tool, path)
+			foundAny = true
+		} else {
+			fmt.Printf("❌ %s: not found\n", tool)
+		}
+	}
+	
+	if !foundAny {
+		fmt.Println()
+		fmt.Println("💡 Install clipboard utilities:")
+		fmt.Println("   • Ubuntu/Debian: sudo apt install xclip xsel wl-clipboard")
+		fmt.Println("   • Fedora/RHEL: sudo dnf install xclip xsel wl-clipboard")
+		fmt.Println("   • Arch Linux: sudo pacman -S xclip xsel wl-clipboard")
+		fmt.Println("   • openSUSE: sudo zypper install xclip xsel wl-clipboard")
+	}
+
+	// Test clipboard access
+	fmt.Println()
+	fmt.Println("🧪 Testing clipboard access...")
+	if _, err := clipboard.ReadAll(); err != nil {
+		fmt.Printf("❌ Clipboard test failed: %v\n", err)
+		fmt.Println()
+		fmt.Println("💡 Possible solutions:")
+		fmt.Println("   • Install missing clipboard utilities (see above)")
+		fmt.Println("   • Ensure you're running in a graphical session")
+		fmt.Println("   • Try running with 'clipboard-manager daemon-passive' for headless mode")
+	} else {
+		fmt.Println("✓ Clipboard access working")
+	}
+
+	fmt.Println()
+	fmt.Println("🚀 Alternative modes for limited environments:")
+	fmt.Println("   • clipboard-manager daemon-passive  - No automatic monitoring")
+	fmt.Println("   • clipboard-manager help           - Show all available options")
+	fmt.Println("   • clipboard-manager status         - Check daemon status")
 }
 
 // watches clipboard continuously
