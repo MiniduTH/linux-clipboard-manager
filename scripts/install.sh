@@ -24,32 +24,93 @@ elif command -v wl-copy &> /dev/null; then
 fi
 
 if [ -z "$CLIPBOARD_TOOL" ]; then
-    echo "Warning: No clipboard utility found."
-    echo "Installing clipboard utilities..."
+    echo "⚠️  Warning: No clipboard utility found."
+    echo "⚙️  Installing clipboard utilities automatically..."
+    echo
+    
+    INSTALL_SUCCESS=false
     
     # Detect distribution and install appropriate package
-    if command -v apt &> /dev/null; then
-        # Ubuntu/Debian
-        echo "Detected Ubuntu/Debian system"
-        sudo apt update
-        sudo apt install -y xclip
-    elif command -v dnf &> /dev/null; then
-        # Fedora
-        echo "Detected Fedora system"
-        sudo dnf install -y xclip
-    elif command -v yum &> /dev/null; then
-        # CentOS/RHEL
-        echo "Detected CentOS/RHEL system"
-        sudo yum install -y xclip
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        
+        case "$ID" in
+            ubuntu|debian|linuxmint)
+                echo "Detected: $ID"
+                if [ -n "$WAYLAND_DISPLAY" ]; then
+                    echo "Installing wl-clipboard for Wayland..."
+                    sudo apt-get update && sudo apt-get install -y wl-clipboard && INSTALL_SUCCESS=true
+                else
+                    echo "Installing xclip for X11..."
+                    sudo apt-get update && sudo apt-get install -y xclip && INSTALL_SUCCESS=true
+                fi
+                ;;
+            fedora|rhel|centos)
+                echo "Detected: $ID"
+                if [ -n "$WAYLAND_DISPLAY" ]; then
+                    echo "Installing wl-clipboard for Wayland..."
+                    sudo dnf install -y wl-clipboard && INSTALL_SUCCESS=true
+                else
+                    echo "Installing xclip for X11..."
+                    sudo dnf install -y xclip && INSTALL_SUCCESS=true
+                fi
+                ;;
+            arch|manjaro)
+                echo "Detected: $ID"
+                if [ -n "$WAYLAND_DISPLAY" ]; then
+                    echo "Installing wl-clipboard for Wayland..."
+                    sudo pacman -S --noconfirm wl-clipboard && INSTALL_SUCCESS=true
+                else
+                    echo "Installing xclip for X11..."
+                    sudo pacman -S --noconfirm xclip && INSTALL_SUCCESS=true
+                fi
+                ;;
+            opensuse*|sles)
+                echo "Detected: $ID"
+                if [ -n "$WAYLAND_DISPLAY" ]; then
+                    echo "Installing wl-clipboard for Wayland..."
+                    sudo zypper install -y wl-clipboard && INSTALL_SUCCESS=true
+                else
+                    echo "Installing xclip for X11..."
+                    sudo zypper install -y xclip && INSTALL_SUCCESS=true
+                fi
+                ;;
+            *)
+                echo "⚠️  Unknown distribution: $ID"
+                ;;
+        esac
+    fi
+    
+    if [ "$INSTALL_SUCCESS" = true ]; then
+        echo "✓ Clipboard utilities installed successfully!"
+        
+        # Re-check for clipboard utilities
+        if command -v xclip &> /dev/null; then
+            CLIPBOARD_TOOL="xclip"
+        elif command -v xsel &> /dev/null; then
+            CLIPBOARD_TOOL="xsel"
+        elif command -v wl-copy &> /dev/null; then
+            CLIPBOARD_TOOL="wl-clipboard"
+        fi
+        
+        if [ -n "$CLIPBOARD_TOOL" ]; then
+            echo "✓ Found clipboard utility: $CLIPBOARD_TOOL"
+        else
+            echo "❌ Error: Clipboard utilities still not available after installation"
+            exit 1
+        fi
     else
-        echo "Please install xclip, xsel, or wl-clipboard manually:"
-        echo "  Ubuntu/Debian: sudo apt install xclip"
-        echo "  Fedora: sudo dnf install xclip"
-        echo "  Arch: sudo pacman -S xclip"
+        echo
+        echo "❌ Error: Could not automatically install clipboard utilities"
+        echo "   Please install manually:"
+        echo "   Ubuntu/Debian: sudo apt install xclip"
+        echo "   Fedora: sudo dnf install xclip"
+        echo "   Arch: sudo pacman -S xclip"
+        echo "   For Wayland: install wl-clipboard instead of xclip"
         exit 1
     fi
 else
-    echo "Found clipboard utility: $CLIPBOARD_TOOL"
+    echo "✓ Found clipboard utility: $CLIPBOARD_TOOL"
 fi
 
 # Build the application

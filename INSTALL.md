@@ -1,16 +1,68 @@
 # Installation Guide
 
+## Prerequisites
+
+Before installing, make sure you have:
+1. **A graphical environment** (GNOME, KDE, XFCE, etc.) - required
+2. **Clipboard utilities** - at least one of: `xclip`, `xsel`, or `wl-clipboard`
+
+### Quick Dependency Check
+
+```bash
+# Check if you're in a graphical session
+echo $DISPLAY
+echo $WAYLAND_DISPLAY
+# At least one should show a value
+
+# Check for clipboard utilities
+which xclip xsel wl-copy
+# At least one should be found
+```
+
+### Install Missing Dependencies
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install xclip
+```
+
+**Fedora:**
+```bash
+sudo dnf install xclip
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S xclip
+```
+
+**Wayland users:**
+```bash
+# Ubuntu/Debian
+sudo apt install wl-clipboard
+
+# Fedora  
+sudo dnf install wl-clipboard
+
+# Arch Linux
+sudo pacman -S wl-clipboard
+```
+
+---
+
 ## For Users WITHOUT Go Installed (Recommended)
 
 ### Option 1: Download Pre-built Release
 
-1. **Download** the latest release from GitHub releases page
-2. **Extract** the archive:
+1. **Install dependencies first** (see above)
+2. **Download** the latest release from GitHub releases page
+3. **Extract** the archive:
    ```bash
    tar -xzf clipboard-manager-release.tar.gz
    cd release/
    ```
-3. **Install** automatically:
+4. **Install** automatically:
    ```bash
    chmod +x install.sh
    ./install.sh
