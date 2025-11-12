@@ -44,6 +44,11 @@ func main() {
 		}
 	}
 
+	// Auto-enable startup on first run (unless explicitly disabling)
+	if len(os.Args) == 1 || (len(os.Args) > 1 && os.Args[1] != "startup-disable") {
+		ensureStartupEnabled()
+	}
+
 	loadHistory() // load previous data
 
 	if len(os.Args) > 1 && os.Args[1] == "show" {
@@ -699,7 +704,7 @@ func enableStartup() {
 Name=Clipboard Manager
 GenericName=Clipboard History Manager
 Comment=Clipboard history manager with Ctrl+Shift+V hotkey
-Exec=/usr/local/bin/clipboard-manager daemon
+Exec=/usr/local/bin/clipboard-manager clipboard-manager
 Icon=edit-copy
 Terminal=false
 Type=Application
@@ -746,4 +751,62 @@ func disableStartup() {
 	fmt.Printf("   • Removed: %s\n", autostartFile)
 	fmt.Println("   • Clipboard Manager will not start automatically on login")
 	fmt.Println("   • Run 'clipboard-manager startup-enable' to re-enable")
+}
+
+// ensureStartupEnabled automatically enables startup if not already configured
+func ensureStartupEnabled() {
+	autostartDir := os.ExpandEnv("$HOME/.config/autostart")
+	autostartFile := autostartDir + "/clipboard-manager.desktop"
+	
+	// Check if already exists and enabled
+	if _, err := os.Stat(autostartFile); err == nil {
+		// File exists, check if it's enabled
+		content, readErr := os.ReadFile(autostartFile)
+		if readErr == nil {
+			contentStr := string(content)
+			// If not explicitly disabled, assume it's good
+			if !strings.Contains(contentStr, "Hidden=true") && !strings.Contains(contentStr, "X-GNOME-Autostart-enabled=false") {
+				return // Already enabled, nothing to do
+			}
+		}
+	}
+	
+	// Create autostart directory if it doesn't exist
+	if err := os.MkdirAll(autostartDir, 0755); err != nil {
+		// Silently fail - don't interrupt the app startup
+		return
+	}
+	
+	// Create the autostart file
+	content := `[Desktop Entry]
+Name=Clipboard Manager
+GenericName=Clipboard History Manager
+Comment=Clipboard history manager with Ctrl+Shift+V hotkey
+Exec=/usr/local/bin/clipboard-manager
+Icon=edit-copy
+Terminal=false
+Type=Application
+Categories=Utility;System;Accessibility;
+Keywords=clipboard;history;copy;paste;hotkey;
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-after=panel
+X-MATE-Autostart-enabled=true
+X-XFCE-Autostart-enabled=true
+Hidden=false
+NoDisplay=false
+StartupNotify=false
+X-GNOME-Autostart-Delay=3
+X-KDE-StartupNotify=false
+OnlyShowIn=GNOME;KDE;XFCE;MATE;Unity;Cinnamon;Pantheon;LXQt;LXDE;
+`
+	
+	if err := os.WriteFile(autostartFile, []byte(content), 0644); err != nil {
+		// Silently fail - don't interrupt the app startup
+		return
+	}
+	
+	// Only show message on first-time setup
+	fmt.Println("✅ Auto-enabled startup application")
+	fmt.Println("   • Clipboard Manager will start automatically on login")
+	fmt.Println("   • Use 'clipboard-manager startup-disable' to disable if needed")
 }
