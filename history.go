@@ -148,6 +148,45 @@ func addImageToHistory(imageData []byte, format string) {
 	refreshHistoryFromDB()
 }
 
+// editHistoryItem updates the content of a text item in history by index
+func editHistoryItem(index int, newContent string) error {
+	historyMu.Lock()
+	defer historyMu.Unlock()
+	
+	if index < 0 || index >= len(history) {
+		return fmt.Errorf("invalid index %d for history edit", index)
+	}
+	
+	// Get the item to edit
+	item := history[index]
+	
+	// Only allow editing text items
+	if item.Type != ItemTypeText {
+		return fmt.Errorf("can only edit text items")
+	}
+	
+	// Clean and validate the new text
+	newContent = strings.TrimSpace(newContent)
+	if newContent == "" {
+		return fmt.Errorf("new content cannot be empty")
+	}
+	
+	if !utf8.ValidString(newContent) {
+		return fmt.Errorf("new content is not valid UTF-8")
+	}
+	
+	// Update in database
+	if err := updateClipboardItem(item.Content, newContent, item.Type); err != nil {
+		return fmt.Errorf("error updating item in database: %v", err)
+	}
+	
+	// Update in-memory history
+	refreshHistoryFromDB()
+	fmt.Printf("Updated history item at index %d\n", index)
+	
+	return nil
+}
+
 // Remove specific item from history by index
 func removeHistoryItem(index int) {
 	historyMu.Lock()

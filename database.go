@@ -188,6 +188,31 @@ func loadClipboardHistory() ([]ClipboardItem, error) {
 	return items, nil
 }
 
+// updateClipboardItem updates the content of an existing clipboard item
+func updateClipboardItem(oldContent string, newContent string, itemType ClipboardItemType) error {
+	if db == nil {
+		return fmt.Errorf("database not initialized")
+	}
+	
+	// Update the item's content and timestamp
+	updateSQL := "UPDATE clipboard_history SET content = ?, timestamp = ? WHERE content = ? AND type = ?"
+	result, err := db.Exec(updateSQL, newContent, time.Now(), oldContent, string(itemType))
+	if err != nil {
+		return fmt.Errorf("failed to update clipboard item: %v", err)
+	}
+	
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %v", err)
+	}
+	
+	if rowsAffected == 0 {
+		return fmt.Errorf("no item found to update")
+	}
+	
+	return nil
+}
+
 // deleteClipboardItem deletes a clipboard item by its content and type
 func deleteClipboardItem(content string, itemType ClipboardItemType) error {
 	if db == nil {

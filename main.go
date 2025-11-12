@@ -782,7 +782,7 @@ func ensureStartupEnabled() {
 Name=Clipboard Manager
 GenericName=Clipboard History Manager
 Comment=Clipboard history manager with Ctrl+Shift+V hotkey
-Exec=/usr/local/bin/clipboard-manager
+Exec=/usr/local/bin/clipboard-manager clipboard-manager
 Icon=edit-copy
 Terminal=false
 Type=Application

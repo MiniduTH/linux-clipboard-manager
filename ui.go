@@ -42,7 +42,7 @@ func refreshUI(w fyne.Window) {
 	// Create custom history list items
 	var historyItems []fyne.CanvasObject
 	
-	// Define handlers for item selection and deletion
+	// Define handlers for item selection, deletion, and editing
 	onSelect := func(index int) {
 		// Convert UI index to history array index (newest first display)
 		historyIndex := historyLen - 1 - index
@@ -97,10 +97,24 @@ func refreshUI(w fyne.Window) {
 		refreshUI(w)
 	}
 	
+	onEdit := func(index int) {
+		// Convert UI index to history array index (newest first display)
+		historyIndex := historyLen - 1 - index
+		originalItem := historyCopy[historyIndex]
+		
+		// Only allow editing text items
+		if originalItem.Type != ItemTypeText {
+			return
+		}
+		
+		// Show edit dialog
+		showEditDialog(w, historyIndex, originalItem.Content)
+	}
+	
 	// Create custom list items (newest first)
 	for i := 0; i < historyLen; i++ {
 		item := historyCopy[historyLen-1-i]
-		historyItem := NewHistoryListItem(item, i, onDelete, onSelect)
+		historyItem := NewHistoryListItem(item, i, onDelete, onSelect, onEdit)
 		historyItems = append(historyItems, historyItem)
 	}
 	
@@ -118,7 +132,7 @@ func refreshUI(w fyne.Window) {
 	closeBtn.Importance = widget.HighImportance
 
 	buttonContainer := container.NewHBox(closeBtn)
-	headerLabel := widget.NewLabel(fmt.Sprintf("Clipboard History (%d items) - Click to copy, X to delete", historyLen))
+	headerLabel := widget.NewLabel(fmt.Sprintf("Clipboard History (%d items) - Click to copy, Edit/Delete with buttons", historyLen))
 	headerLabel.Wrapping = fyne.TextWrapWord
 
 	content := container.NewVBox(
@@ -131,6 +145,80 @@ func refreshUI(w fyne.Window) {
 
 	w.SetContent(content)
 	w.Canvas().Refresh(content)
+}
+
+// showEditDialog displays a dialog for editing text content
+func showEditDialog(parent fyne.Window, historyIndex int, currentContent string) {
+	// Create a multi-line entry for editing
+	entry := widget.NewMultiLineEntry()
+	entry.SetText(currentContent)
+	entry.Wrapping = fyne.TextWrapWord
+	entry.SetMinRowsVisible(10)
+	
+	// Create dialog variable that we'll populate
+	var dialog *widget.PopUp
+	
+	// Create save button handler
+	saveHandler := func() {
+		newContent := strings.TrimSpace(entry.Text)
+		if newContent == "" {
+			// Show error if content is empty
+			errDialog := widget.NewModalPopUp(
+				container.NewVBox(
+					widget.NewLabel("Error: Content cannot be empty"),
+					widget.NewButton("OK", func() {
+						// Just close the error dialog, keep edit dialog open
+					}),
+				),
+				parent.Canvas(),
+			)
+			errDialog.Show()
+			return
+		}
+		
+		// Update the item
+		if err := editHistoryItem(historyIndex, newContent); err != nil {
+			fmt.Printf("Error editing item: %v\n", err)
+			errDialog := widget.NewModalPopUp(
+				container.NewVBox(
+					widget.NewLabel(fmt.Sprintf("Error: %v", err)),
+					widget.NewButton("OK", func() {
+						// Just close the error dialog, keep edit dialog open
+					}),
+				),
+				parent.Canvas(),
+			)
+			errDialog.Show()
+			return
+		}
+		
+		// Close dialog and refresh UI
+		dialog.Hide()
+		refreshUI(parent)
+	}
+	
+	// Create cancel button handler
+	cancelHandler := func() {
+		dialog.Hide()
+	}
+	
+	// Create dialog with save and cancel buttons
+	dialog = widget.NewModalPopUp(
+		container.NewVBox(
+			widget.NewLabel("Edit Clipboard Item"),
+			widget.NewSeparator(),
+			container.NewScroll(entry),
+			widget.NewSeparator(),
+			container.NewHBox(
+				widget.NewButton("Save", saveHandler),
+				widget.NewButton("Cancel", cancelHandler),
+			),
+		),
+		parent.Canvas(),
+	)
+	
+	dialog.Resize(fyne.NewSize(600, 400))
+	dialog.Show()
 }
 
 func showPopup() error {

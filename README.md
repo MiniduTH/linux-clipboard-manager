@@ -11,6 +11,7 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 - 📋 **Smart clipboard monitoring** with automatic filtering
 - ⌨️ **Global hotkey support (Super+V)** for instant access from anywhere
 - 🖥️ **GUI interface** using Fyne with automatic terminal fallback
+- ✏️ **Edit clipboard items** - modify text content directly in the history
 - 🔧 **System tray integration** with right-click menu
 - 💾 **SQLite database storage** with automatic JSON migration (up to 50 items)
 - 🔄 **Intelligent duplicate detection** and removal
@@ -103,7 +104,10 @@ Starts clipboard monitoring and attempts to set up system hotkeys automatically.
 ```bash
 ./clipboard-manager show
 ```
-Opens a graphical window showing clipboard history. Click any item to restore it to clipboard.
+Opens a graphical window showing clipboard history. 
+- **Click** any item to restore it to clipboard
+- **Edit button** (pencil icon) to modify text content
+- **Delete button** (X icon) to remove items
 
 #### Show Terminal History
 ```bash

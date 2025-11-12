@@ -18,33 +18,37 @@ import (
 )
 
 // HistoryListItem is a custom widget for displaying clipboard history items
-// with delete functionality and proper text wrapping
+// with delete and edit functionality and proper text wrapping
 type HistoryListItem struct {
 	widget.BaseWidget
 	item     ClipboardItem
 	index    int
 	onDelete func(int)
 	onSelect func(int)
+	onEdit   func(int)
 	
 	// Internal widgets
 	textWidget     *widget.RichText
 	imageWidget    *canvas.Image
 	deleteButton   *widget.Button
+	editButton     *widget.Button
 	container      *fyne.Container
 	background     *canvas.Rectangle
 	
 	// Hover state management
 	isHovered       bool
 	deleteHovered   bool
+	editHovered     bool
 }
 
 // NewHistoryListItem creates a new history list item widget
-func NewHistoryListItem(clipboardItem ClipboardItem, index int, onDelete func(int), onSelect func(int)) *HistoryListItem {
+func NewHistoryListItem(clipboardItem ClipboardItem, index int, onDelete func(int), onSelect func(int), onEdit func(int)) *HistoryListItem {
 	item := &HistoryListItem{
 		item:     clipboardItem,
 		index:    index,
 		onDelete: onDelete,
 		onSelect: onSelect,
+		onEdit:   onEdit,
 	}
 	
 	item.ExtendBaseWidget(item)
@@ -68,6 +72,21 @@ func (h *HistoryListItem) createContent() {
 	// Style the delete button with consistent sizing and improved accessibility
 	h.deleteButton.Resize(fyne.NewSize(28, 28)) // Slightly larger for better touch targets
 	h.deleteButton.Importance = widget.LowImportance
+	
+	// Create edit button for text items only
+	var buttonContainer *fyne.Container
+	if h.item.Type == ItemTypeText {
+		h.editButton = widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
+			if h.onEdit != nil {
+				h.onEdit(h.index)
+			}
+		})
+		h.editButton.Resize(fyne.NewSize(28, 28))
+		h.editButton.Importance = widget.LowImportance
+		buttonContainer = container.NewHBox(h.editButton, h.deleteButton)
+	} else {
+		buttonContainer = container.NewHBox(h.deleteButton)
+	}
 	
 	var contentWidget fyne.CanvasObject
 	
@@ -113,9 +132,9 @@ func (h *HistoryListItem) createContent() {
 		}
 	}
 	
-	// Create content container with content and delete button
+	// Create content container with content and action buttons
 	contentContainer := container.NewBorder(
-		nil, nil, nil, h.deleteButton,
+		nil, nil, nil, buttonContainer,
 		contentWidget,
 	)
 	
@@ -128,6 +147,7 @@ func (h *HistoryListItem) createContent() {
 	// Initialize hover states
 	h.isHovered = false
 	h.deleteHovered = false
+	h.editHovered = false
 	h.updateHoverState()
 }
 
@@ -261,6 +281,11 @@ func (h *HistoryListItem) updateHoverState() {
 		h.background.FillColor = deleteHover
 		h.background.StrokeColor = &color.RGBA{R: 200, G: 100, B: 100, A: 100}
 		h.background.StrokeWidth = 1
+	} else if h.editHovered {
+		// Edit button is hovered - use a subtle highlight
+		h.background.FillColor = itemHover
+		h.background.StrokeColor = theme.PrimaryColor()
+		h.background.StrokeWidth = 1
 	} else if h.isHovered {
 		// Item is hovered - use item hover color
 		h.background.FillColor = itemHover
@@ -273,13 +298,20 @@ func (h *HistoryListItem) updateHoverState() {
 		h.background.StrokeWidth = 0
 	}
 	
-	// Apply additional styling to delete button when hovered
+	// Apply additional styling to buttons when hovered
 	if h.deleteHovered {
-		// Make delete button more prominent when hovered
 		h.deleteButton.Importance = widget.HighImportance
 	} else {
-		// Reset to normal importance
 		h.deleteButton.Importance = widget.LowImportance
+	}
+	
+	if h.editButton != nil {
+		if h.editHovered {
+			h.editButton.Importance = widget.HighImportance
+		} else {
+			h.editButton.Importance = widget.LowImportance
+		}
+		h.editButton.Refresh()
 	}
 	
 	h.background.Refresh()
@@ -309,7 +341,7 @@ func (h *HistoryListItem) TappedSecondary(*fyne.PointEvent) {
 // MouseIn handles mouse enter events for hover effects
 func (h *HistoryListItem) MouseIn(event *desktop.MouseEvent) {
 	h.isHovered = true
-	h.checkDeleteButtonHover(event.Position)
+	h.checkButtonHover(event.Position)
 	h.updateHoverState()
 }
 
@@ -317,34 +349,44 @@ func (h *HistoryListItem) MouseIn(event *desktop.MouseEvent) {
 func (h *HistoryListItem) MouseOut() {
 	h.isHovered = false
 	h.deleteHovered = false
+	h.editHovered = false
 	h.updateHoverState()
 }
 
 // MouseMoved handles mouse movement for hover tracking
 func (h *HistoryListItem) MouseMoved(event *desktop.MouseEvent) {
-	// Check if mouse is over delete button area
-	h.checkDeleteButtonHover(event.Position)
+	// Check if mouse is over action buttons
+	h.checkButtonHover(event.Position)
 	h.updateHoverState()
 }
 
-// checkDeleteButtonHover determines if the mouse is over the delete button
-func (h *HistoryListItem) checkDeleteButtonHover(pos fyne.Position) {
-	if h.deleteButton == nil {
+// checkButtonHover determines if the mouse is over any action button
+func (h *HistoryListItem) checkButtonHover(pos fyne.Position) {
+	padding := float32(8)
+	
+	// Check delete button
+	if h.deleteButton != nil {
+		buttonPos := h.deleteButton.Position()
+		buttonSize := h.deleteButton.Size()
+		h.deleteHovered = pos.X >= buttonPos.X-padding &&
+			pos.X <= buttonPos.X+buttonSize.Width+padding &&
+			pos.Y >= buttonPos.Y-padding &&
+			pos.Y <= buttonPos.Y+buttonSize.Height+padding
+	} else {
 		h.deleteHovered = false
-		return
 	}
 	
-	// Get delete button position and size
-	buttonPos := h.deleteButton.Position()
-	buttonSize := h.deleteButton.Size()
-	
-	// Check if mouse position is within delete button bounds
-	// Add generous padding for easier interaction and better accessibility
-	padding := float32(8)
-	h.deleteHovered = pos.X >= buttonPos.X-padding &&
-		pos.X <= buttonPos.X+buttonSize.Width+padding &&
-		pos.Y >= buttonPos.Y-padding &&
-		pos.Y <= buttonPos.Y+buttonSize.Height+padding
+	// Check edit button
+	if h.editButton != nil {
+		buttonPos := h.editButton.Position()
+		buttonSize := h.editButton.Size()
+		h.editHovered = pos.X >= buttonPos.X-padding &&
+			pos.X <= buttonPos.X+buttonSize.Width+padding &&
+			pos.Y >= buttonPos.Y-padding &&
+			pos.Y <= buttonPos.Y+buttonSize.Height+padding
+	} else {
+		h.editHovered = false
+	}
 }
 
 // UpdateItem updates the clipboard item content
@@ -408,6 +450,9 @@ func (r *historyListItemRenderer) Refresh() {
 	if r.item.deleteButton != nil {
 		r.item.deleteButton.Refresh()
 	}
+	if r.item.editButton != nil {
+		r.item.editButton.Refresh()
+	}
 	r.container.Refresh()
 }
 
@@ -422,4 +467,5 @@ func (r *historyListItemRenderer) Destroy() {
 	r.item.background = nil
 	r.item.textWidget = nil
 	r.item.deleteButton = nil
+	r.item.editButton = nil
 }
