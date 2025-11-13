@@ -68,7 +68,8 @@ func TestHistoryListItemRendering(t *testing.T) {
 				Content:   tc.text,
 				Timestamp: time.Now(),
 			}
-			item := NewHistoryListItem(clipboardItem, 0, onDelete, onSelect)
+			onEdit := func(index int) {}
+			item := NewHistoryListItem(clipboardItem, 0, onDelete, onSelect, onEdit)
 			
 			// Verify widget was created successfully
 			if item == nil {
@@ -181,7 +182,8 @@ func TestHistoryListItemInteraction(t *testing.T) {
 		Content:   testText,
 		Timestamp: time.Now(),
 	}
-	item := NewHistoryListItem(clipboardItem, testIndex, onDelete, onSelect)
+	onEdit := func(index int) {}
+	item := NewHistoryListItem(clipboardItem, testIndex, onDelete, onSelect, onEdit)
 
 	// Test item selection (tap)
 	t.Run("Item selection", func(t *testing.T) {
@@ -321,7 +323,7 @@ func TestHistoryListItemTextWrapping(t *testing.T) {
 				Content:   tc.text,
 				Timestamp: time.Now(),
 			}
-			item := NewHistoryListItem(clipboardItem, 0, nil, nil)
+			item := NewHistoryListItem(clipboardItem, 0, nil, nil, nil)
 
 			// Test text preparation
 			displayText := item.prepareDisplayText()
@@ -394,7 +396,7 @@ func TestHistoryListItemUpdates(t *testing.T) {
 		Content:   originalText,
 		Timestamp: time.Now(),
 	}
-	item := NewHistoryListItem(clipboardItem, originalIndex, nil, nil)
+	item := NewHistoryListItem(clipboardItem, originalIndex, nil, nil, nil)
 
 	// Test item update
 	t.Run("Item update", func(t *testing.T) {
