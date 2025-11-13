@@ -2,14 +2,16 @@
 
 A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) that tracks your clipboard history and allows you to restore previous clipboard entries with a global hotkey.
 
-**🚀 No Go installation required!** Download pre-built binaries from [Releases](https://github.com/MiniduTH/linux-clipboard-manager/releases) or see [DOWNLOAD.md](DOWNLOAD.md) for quick installation.
+**🚀 No Go installation required!** Download pre-built binaries from [Releases](https://github.com/MiniduTH/linux-clipboard-manager/releases/latest) or see [DOWNLOAD.md](DOWNLOAD.md) for quick installation.
 
 **⚡ Auto-starts on login!** Installation automatically sets up the clipboard manager to start when you turn on your PC.
+
+**✨ Latest Release: v3.7.0** - Enhanced edit dialog with better usability and developer tools.
 
 ## ✨ Features
 
 - 📋 **Smart clipboard monitoring** with automatic filtering
-- ⌨️ **Global hotkey support (Super+V)** for instant access from anywhere
+- ⌨️ **Global hotkey support (Ctrl+Shift+V)** for instant access from anywhere
 - 🖥️ **GUI interface** using Fyne with automatic terminal fallback
 - ✏️ **Edit clipboard items** - modify text content directly in the history
 - 🔧 **System tray integration** with right-click menu
@@ -27,17 +29,18 @@ A powerful clipboard history manager for Linux systems (Ubuntu, Fedora, etc.) th
 ### Option 1: No Go Required (Recommended for Most Users)
 
 **Download pre-built release:**
-1. Go to [Releases](https://github.com/MiniduTH/linux-clipboard-manager/releases)
+1. Go to [Releases](https://github.com/MiniduTH/linux-clipboard-manager/releases/latest)
 2. Download `clipboard-manager-release.tar.gz`
 3. Extract and install:
    ```bash
+   wget https://github.com/MiniduTH/linux-clipboard-manager/releases/download/v3.7.0/clipboard-manager-release.tar.gz
    tar -xzf clipboard-manager-release.tar.gz
    cd release/
    chmod +x install.sh
    ./install.sh
    ```
 
-That's it! Press **Super+V** (Windows key + V) from anywhere to access your clipboard history.
+That's it! Press **Ctrl+Shift+V** from anywhere to access your clipboard history.
 
 ### Option 2: Build from Source (For Developers)
 
@@ -90,7 +93,7 @@ make build
 ## 📖 Usage
 
 ### Global Hotkey (Recommended)
-After running `make install`, press **Super+V** from anywhere to open clipboard history.
+After running `make install`, press **Ctrl+Shift+V** from anywhere to open clipboard history.
 
 ### Manual Commands
 
@@ -188,7 +191,7 @@ If automatic setup doesn't work:
 3. Add a custom shortcut:
    - **Name**: Clipboard Manager
    - **Command**: `/usr/local/bin/clipboard-manager show`
-   - **Shortcut**: Super+V
+   - **Shortcut**: Ctrl+Shift+V
 
 ### Autostart Setup
 To start automatically on login:
@@ -229,12 +232,13 @@ sudo systemctl --user enable clipboard-manager.service
   ```
 
 ### Hotkey Not Working
-- **Issue**: Super+V doesn't work
+- **Issue**: Ctrl+Shift+V doesn't work
 - **Solutions**:
   1. Run `make install` again to reconfigure hotkeys
   2. Check if running in proper graphical session
   3. Verify `$DISPLAY` or `$WAYLAND_DISPLAY` environment variables
   4. Set up manually in system settings
+  5. Check if another application is using the same hotkey
 
 ### Build Issues
 - **Issue**: Compilation fails
@@ -248,12 +252,15 @@ sudo systemctl --user enable clipboard-manager.service
 ```
 clipboard-manager/
 ├── docs/              # Documentation and guides
+│   ├── releases/      # Release notes
 │   ├── CONTRIBUTING.md
+│   ├── EDIT_FEATURE_GUIDE.md
 │   └── README.md
 ├── scripts/           # Installation and setup scripts
 │   ├── clean-install.sh
 │   ├── install.sh
-│   └── setup-hotkey.sh
+│   ├── setup-hotkey.sh
+│   └── update.sh      # Developer update script
 ├── tests/             # Test utilities and documentation
 │   ├── run_tests.sh
 │   └── README.md
@@ -364,6 +371,9 @@ make build    # Build
 make test     # Test
 make run      # Test run
 
+# Quick update and restart (after code changes)
+./scripts/update.sh  # Stops, rebuilds, installs, and restarts
+
 # Installation
 make install  # Install with hotkeys
 
@@ -371,6 +381,22 @@ make install  # Install with hotkeys
 make clean    # Clean build files
 make uninstall-complete  # Remove everything
 ```
+
+### Developer Update Script
+
+The `scripts/update.sh` script automates the rebuild and restart process:
+
+```bash
+./scripts/update.sh
+```
+
+This script will:
+1. Stop the running clipboard manager
+2. Rebuild the binary using `make build`
+3. Install system-wide (requires sudo)
+4. Restart the service automatically
+
+Perfect for quick iteration during development!
 
 ### Creating Releases (For Maintainers)
 
@@ -442,22 +468,35 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 | Feature | This App | Other Tools |
 |---------|----------|-------------|
-| Global Hotkey | ✅ Super+V | ❌ Usually not |
+| Global Hotkey | ✅ Ctrl+Shift+V | ❌ Usually not |
+| Edit Items | ✅ Yes | ❌ Rare |
 | GUI + Terminal | ✅ Both | ❌ Usually one |
+| Image Support | ✅ Yes | ❌ Limited |
 | Smart Filtering | ✅ Yes | ❌ No |
 | System Tray | ✅ Yes | ❌ Rare |
 | Auto Setup | ✅ Yes | ❌ Manual |
 | Cross-DE Support | ✅ GNOME/KDE | ❌ Limited |
 
+## 📝 Recent Updates
+
+### Version 3.7.0 - Enhanced Edit Experience
+- **Larger Edit Dialog**: 50% more visible content (15 vs 10 rows)
+- **Bigger Window**: Expanded to 700x550 pixels for comfortable editing
+- **Developer Tools**: New `scripts/update.sh` for easy rebuilding
+- **Bug Fixes**: Fixed GitHub workflows and test compatibility
+
+[View Full Changelog](https://github.com/MiniduTH/linux-clipboard-manager/releases/tag/v3.7.0)
+
 ## 🚀 Roadmap
 
+- [x] Image clipboard support
+- [x] Edit clipboard items
 - [ ] Wayland-native clipboard support
 - [ ] Plugin system for custom filters
 - [ ] Cloud sync support
 - [ ] Encrypted history storage
 - [ ] Custom hotkey configuration
 - [ ] Clipboard search functionality
-- [ ] Image clipboard support
 
 ---
 
