@@ -153,7 +153,7 @@ func showEditDialog(parent fyne.Window, historyIndex int, currentContent string)
 	entry := widget.NewMultiLineEntry()
 	entry.SetText(currentContent)
 	entry.Wrapping = fyne.TextWrapWord
-	entry.SetMinRowsVisible(10)
+	entry.SetMinRowsVisible(15)
 	
 	// Create dialog variable that we'll populate
 	var dialog *widget.PopUp
@@ -202,12 +202,16 @@ func showEditDialog(parent fyne.Window, historyIndex int, currentContent string)
 		dialog.Hide()
 	}
 	
+	// Create scrollable entry container with explicit size
+	entryScroll := container.NewScroll(entry)
+	entryScroll.SetMinSize(fyne.NewSize(650, 450))
+	
 	// Create dialog with save and cancel buttons
 	dialog = widget.NewModalPopUp(
 		container.NewVBox(
 			widget.NewLabel("Edit Clipboard Item"),
 			widget.NewSeparator(),
-			container.NewScroll(entry),
+			entryScroll,
 			widget.NewSeparator(),
 			container.NewHBox(
 				widget.NewButton("Save", saveHandler),
@@ -217,7 +221,7 @@ func showEditDialog(parent fyne.Window, historyIndex int, currentContent string)
 		parent.Canvas(),
 	)
 	
-	dialog.Resize(fyne.NewSize(600, 400))
+	dialog.Resize(fyne.NewSize(700, 550))
 	dialog.Show()
 }
 
